@@ -11,11 +11,19 @@ const TEAMS = {
 const ESPN_URL = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
 const REFRESH_MS = 60000;
 
-// Normalize for matching: lowercase, strip diacritics, drop punctuation, collapse spaces
+// Normalize for matching: lowercase, strip diacritics + non-decomposable letters, drop punctuation
 function norm(s) {
   return (s || "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
+    // Non-decomposable special letters that NFD doesn't split
+    .replace(/[øØ]/g, "o")
+    .replace(/[æÆ]/g, "ae")
+    .replace(/[œŒ]/g, "oe")
+    .replace(/[ðÐ]/g, "d")
+    .replace(/[þÞ]/g, "th")
+    .replace(/[ßẞ]/g, "ss")
+    .replace(/[łŁ]/g, "l")
     .toLowerCase()
     .replace(/[.'\-]/g, "")
     .replace(/\s+/g, " ")
@@ -141,12 +149,12 @@ function render(data) {
       .sort((a, b) => (a.score ?? 99) - (b.score ?? 99))
       .map(r => {
         if (r.missing) {
-          return `<li class="missed"><span class="nm">${r.name}</span><span class="sc">N/A</span></li>`;
+          return `<li class="not-found"><span class="nm">${r.name}</span><span class="sc">N/A</span></li>`;
         }
         const cls = scoreClass(r.score);
         const display = r.score == null ? (r.rawScore || "—") : fmtScore(r.score);
         const thru = r.thru ? ` <span style="color: var(--muted); font-size: 11px;">thru ${r.thru}</span>` : "";
-        const missedCls = r.missed ? "missed" : "";
+        const missedCls = r.missed ? "missed-cut" : "";
         return `<li class="${missedCls}"><span class="nm">${r.name}${thru}</span><span class="sc ${cls}">${display}</span></li>`;
       })
       .join("");

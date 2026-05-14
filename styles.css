@@ -128,12 +128,20 @@ tr:last-child td { border-bottom: none; }
 .card li .sc { font-variant-numeric: tabular-nums; color: var(--muted); }
 .card li .sc.under { color: var(--green); font-weight: 600; }
 .card li .sc.over { color: var(--red); }
-.card li.missed { opacity: 0.45; }
-.card li.missed .nm::after {
+.card li.missed-cut { opacity: 0.45; }
+.card li.missed-cut .nm::after {
   content: " — CUT";
   color: var(--red);
   font-size: 11px;
   letter-spacing: 0.5px;
+}
+.card li.not-found { opacity: 0.5; }
+.card li.not-found .nm::after {
+  content: " — not in field";
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  font-style: italic;
 }
 
 .score-under { color: var(--green); font-weight: 600; }

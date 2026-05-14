@@ -198,7 +198,18 @@ tr:last-child td { border-bottom: none; }
 #teams td.lead-total { font-size: 16px; }
 .bonus-inline { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
 .card li .pos { color: var(--muted); font-size: 11px; font-weight: 400; }
+.card li .win-prob {
+  display: inline-block;
+  margin-left: 10px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
 #teams td.adj-total { font-size: 16px; }
+#teams td.pool-prob { color: var(--accent); font-weight: 700; font-size: 15px; }
 .note {
   font-size: 12px;
   color: var(--muted);

@@ -11,6 +11,155 @@ const TEAMS = {
 const ESPN_URL = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
 const REFRESH_MS = 60000;
 
+const TEAMS_ORDER = Object.keys(TEAMS);
+const TEAMS_COUNT = TEAMS_ORDER.length;
+
+// Snake-draft: round 1 forward (John→Tim), round 2 reverse, etc.
+function getDraftPick(teamName, indexInTeam) {
+  const teamIdx = TEAMS_ORDER.indexOf(teamName);
+  const isReverse = (indexInTeam % 2 === 1);
+  const positionInRound = isReverse ? (TEAMS_COUNT - 1 - teamIdx) : teamIdx;
+  return indexInTeam * TEAMS_COUNT + positionInRound + 1;
+}
+
+// Pre-tournament prior anchored to: pick 1 ≈ +450 (18.18%); pick 2 ≈ +1000 (9.09%); pick 50 ≈ +10000 (0.91%).
+function priorWinProb(pick) {
+  if (pick <= 1) return 0.1818;
+  const k = Math.log(0.0909 / 0.0091) / 48;
+  return 0.0909 * Math.exp(-k * (pick - 2));
+}
+
+// Per-hole scoring std dev ≈ 0.7 strokes. Variance of head-to-head difference is 2σ².
+function liveLikelihood(score, leaderScore, missed, holesRemaining) {
+  if (missed) return 0;
+  if (score == null || leaderScore == null) return 1;
+  const back = score - leaderScore;
+  if (holesRemaining <= 0) return back === 0 ? 1 : 0;
+  const sigma = 0.7 * Math.sqrt(Math.max(holesRemaining, 1));
+  return Math.exp(-(back * back) / (4 * sigma * sigma));
+}
+
+function estimateHolesRemaining(period, statusDescription) {
+  if (/final|completed|complete/i.test(statusDescription || "")) return 0;
+  if (!period || period < 1) return 72;
+  const completedRounds = Math.max(0, period - 1);
+  const inProgress = (period >= 1 && period <= 4) ? 9 : 0;
+  return Math.max(0, 72 - completedRounds * 18 - inProgress);
+}
+
+function computeWinProbs(allRows, leaderScore, holesRemaining) {
+  for (const row of allRows) {
+    row.prior = priorWinProb(row.draftPick);
+    row.likelihood = liveLikelihood(row.score, leaderScore, row.missed, holesRemaining);
+    row.rawWeight = row.prior * row.likelihood;
+  }
+  const total = allRows.reduce((s, r) => s + r.rawWeight, 0);
+  for (const row of allRows) {
+    row.winProb = total > 0 ? row.rawWeight / total : 0;
+  }
+}
+
+// Box-Muller normal random
+function randNormal(mean, sd) {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return mean + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// Monte Carlo: simulate remaining tournament, apply pool scoring, count team wins.
+// allRows must have .team annotated. Each non-missed player gets a sampled final score
+// from N(currentScore + skill_adjustment, sigma); missed-cut players stay at the
+// current cut penalty for ranking. After each sim, recompute Top 5 + bonuses per team
+// and credit the winning team (1/N split on ties).
+function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
+  const SIMS = 3000;
+  const STROKE_SD_PER_ROUND = 3.0;
+  const SKILL_SLOPE = 0.04;       // strokes per draft-pick per round; pick 25 = neutral
+  const NEUTRAL_PICK = 25;
+  const TOP_N = 5;
+
+  const teamWins = Object.fromEntries(TEAMS_ORDER.map(t => [t, 0]));
+
+  // Handle the tournament-over case: deterministic winner based on current effective scores
+  if (holesRemaining <= 0) {
+    const teamAdj = Object.fromEntries(TEAMS_ORDER.map(t => [t, 0]));
+    for (const t of TEAMS_ORDER) {
+      const players = allRows.filter(r => r.team === t);
+      const effs = players.map(r => r.effectiveScore).filter(x => x != null).sort((a, b) => a - b);
+      const top5 = effs.slice(0, TOP_N).reduce((s, x) => s + x, 0);
+      const bonus = players.reduce((s, r) => s + (r.bonus || 0), 0);
+      teamAdj[t] = top5 + bonus;
+    }
+    const minAdj = Math.min(...Object.values(teamAdj));
+    const winners = TEAMS_ORDER.filter(t => teamAdj[t] === minAdj);
+    const out = Object.fromEntries(TEAMS_ORDER.map(t => [t, 0]));
+    for (const w of winners) out[w] = 1 / winners.length;
+    return out;
+  }
+
+  const roundsRemaining = holesRemaining / 18;
+  const sigma = STROKE_SD_PER_ROUND * Math.sqrt(roundsRemaining);
+
+  // Pre-group by team for speed
+  const teamPlayers = Object.fromEntries(TEAMS_ORDER.map(t => [t, allRows.filter(r => r.team === t)]));
+
+  for (let s = 0; s < SIMS; s++) {
+    // 1. Sample final score for each player
+    for (const r of allRows) {
+      if (r.missed) {
+        r._simFinal = null;       // ranked via cut penalty, not via score
+      } else if (r.score == null) {
+        r._simFinal = null;       // unknown; skip from leader/top-10 calc
+      } else {
+        const skillAdj = (r.draftPick - NEUTRAL_PICK) * SKILL_SLOPE * roundsRemaining;
+        r._simFinal = r.score + skillAdj + randNormal(0, sigma);
+      }
+    }
+
+    // 2. Recompute cut penalty for this sim = max of made-cut sim finals
+    const madeFinals = allRows.filter(r => !r.missed && r._simFinal != null).map(r => r._simFinal);
+    const simCutPenalty = madeFinals.length > 0 ? Math.max(...madeFinals) : cutPenalty;
+
+    // 3. Determine sim winner + sim top 10 (only among non-missed-cut players with a score)
+    const playing = allRows.filter(r => !r.missed && r._simFinal != null);
+    playing.sort((a, b) => a._simFinal - b._simFinal);
+    const minFinal = playing.length > 0 ? playing[0]._simFinal : null;
+    let pos = 1;
+    for (let i = 0; i < playing.length; i++) {
+      if (i > 0 && playing[i]._simFinal !== playing[i - 1]._simFinal) pos = i + 1;
+      playing[i]._simPos = pos;
+    }
+    for (const r of allRows) {
+      r._simIsWinner = !r.missed && r._simFinal != null && r._simFinal === minFinal;
+      r._simIsTop10 = !r.missed && r._simFinal != null && r._simPos != null && r._simPos <= 10;
+    }
+
+    // 4. For each team: top 5 effective scores + bonuses
+    let minAdj = Infinity;
+    const teamAdj = {};
+    for (const t of TEAMS_ORDER) {
+      const players = teamPlayers[t];
+      const effs = players.map(r => r.missed ? simCutPenalty : r._simFinal).filter(x => x != null).sort((a, b) => a - b);
+      const top5 = effs.slice(0, TOP_N).reduce((sum, x) => sum + x, 0);
+      let bonus = 0;
+      for (const p of players) {
+        if (p._simIsWinner) bonus -= 5;
+        if (p._simIsTop10) bonus -= 1;
+      }
+      const adj = top5 + bonus;
+      teamAdj[t] = adj;
+      if (adj < minAdj) minAdj = adj;
+    }
+    const winners = TEAMS_ORDER.filter(t => teamAdj[t] === minAdj);
+    for (const w of winners) teamWins[w] += 1 / winners.length;
+  }
+
+  const out = {};
+  for (const t of TEAMS_ORDER) out[t] = teamWins[t] / SIMS;
+  return out;
+}
+
 // Normalize for matching: lowercase, strip diacritics + non-decomposable letters, drop punctuation
 function norm(s) {
   return (s || "")
@@ -161,11 +310,13 @@ function render(data) {
 
   for (const [team, roster] of Object.entries(TEAMS)) {
     const rows = [];
-    for (const pname of roster) {
+    for (let pickIdx = 0; pickIdx < roster.length; pickIdx++) {
+      const pname = roster[pickIdx];
+      const draftPick = getDraftPick(team, pickIdx);
       const p = idx.get(norm(pname));
       if (!p) {
         warnings.push(`Could not find player "${pname}" for ${team}`);
-        rows.push({ name: pname, score: null, effectiveScore: null, missed: false, missing: true, counts: false, penalized: false, posNum: null, bonus: 0 });
+        rows.push({ name: pname, score: null, effectiveScore: null, missed: false, missing: true, counts: false, penalized: false, posNum: null, bonus: 0, draftPick });
         continue;
       }
       const score = parseScore(p.score);
@@ -193,6 +344,7 @@ function render(data) {
         isTop10,
         bonus,
         counts: false,
+        draftPick,
       });
     }
 
@@ -219,12 +371,31 @@ function render(data) {
   window._cutPenalty = cutPenalty;
   window._anyCutsMade = anyCutsMade;
 
+  // Per-player tournament-win probability (informational, shown on cards)
+  const leaderScore = madeCutScores.length > 0 ? Math.min(...madeCutScores) : null;
+  const holesRemaining = estimateHolesRemaining(ev.status?.period, ev.status?.type?.description);
+  const allRows = [];
+  for (const t of teamScores) {
+    for (const r of t.rows) {
+      r.team = t.team;
+      allRows.push(r);
+    }
+  }
+  computeWinProbs(allRows, leaderScore, holesRemaining);
+
+  // Pool-win probability: Monte Carlo simulation of remaining tournament + scoring rules
+  const poolProbs = simulatePoolWins(allRows, holesRemaining, cutPenalty);
+  for (const t of teamScores) {
+    t.poolProb = poolProbs[t.team] || 0;
+  }
+
   // Render leaderboard — official = adjusted (top 5 + bonuses); show raw top-5 and all-10 alongside
   const tbody = document.querySelector("#teams tbody");
   tbody.innerHTML = "";
   teamScores.forEach((t, i) => {
     const tr = document.createElement("tr");
     const bonusDisp = t.totalBonus === 0 ? "—" : (t.totalBonus > 0 ? `+${t.totalBonus}` : `${t.totalBonus}`);
+    const poolPct = t.poolProb != null ? (t.poolProb * 100).toFixed(1) + "%" : "—";
     tr.innerHTML = `
       <td>${i + 1}</td>
       <td>${t.team}</td>
@@ -232,6 +403,7 @@ function render(data) {
       <td class="num ${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</td>
       <td class="num bonus ${t.totalBonus < 0 ? 'under' : ''}">${bonusDisp}</td>
       <td class="num all-total ${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</td>
+      <td class="num pool-prob">${poolPct}</td>
     `;
     tbody.appendChild(tr);
   });

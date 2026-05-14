@@ -57,13 +57,60 @@ async function fetchData() {
 }
 
 function buildPlayerIndex(competitors) {
+  // Compute positions client-side from current scores so we don't depend on
+  // ESPN populating position.displayName (which isn't always set during play).
+  // Players with a missed-cut/WD/DQ status are excluded from position ranking.
+  const active = [];
+  const sidelined = [];
+  for (const p of competitors) {
+    const status = p.status?.type?.description || "";
+    if (/cut|wd|dq/i.test(status)) {
+      sidelined.push(p);
+    } else {
+      active.push(p);
+    }
+  }
+  // Sort active by parsed score ascending; players without a score sort last
+  active.sort((a, b) => {
+    const sa = parseScore(a.score);
+    const sb = parseScore(b.score);
+    if (sa == null && sb == null) return 0;
+    if (sa == null) return 1;
+    if (sb == null) return -1;
+    return sa - sb;
+  });
+  // Assign positions with tie handling
+  const posMap = new Map();
+  let i = 0;
+  while (i < active.length) {
+    const score = parseScore(active[i].score);
+    if (score == null) {
+      posMap.set(active[i].athlete?.displayName, { num: null, label: "—" });
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < active.length && parseScore(active[j].score) === score) j++;
+    const tied = j - i > 1;
+    for (let k = i; k < j; k++) {
+      posMap.set(active[k].athlete?.displayName, { num: i + 1, label: (tied ? "T" : "") + (i + 1) });
+    }
+    i = j;
+  }
+  for (const p of sidelined) {
+    posMap.set(p.athlete?.displayName, { num: null, label: "CUT" });
+  }
+
   const idx = new Map();
   for (const p of competitors) {
     const name = p.athlete?.displayName || "";
+    const espnPos = p.status?.position?.displayName || "";
+    const computed = posMap.get(name) || { num: null, label: "" };
     idx.set(norm(name), {
       name,
       score: p.score,
-      pos: p.status?.position?.displayName || "",
+      pos: espnPos || computed.label,
+      posNum: computed.num,
       thru: p.status?.thru || "",
       status: p.status?.type?.description || "",
     });
@@ -125,7 +172,7 @@ function render(data) {
       const missed = /cut|wd|dq/i.test(p.status || "");
       const effectiveScore = missed && score != null ? cutPenalty : score;
       const penalized = missed && score != null && effectiveScore !== score;
-      const posNum = positionNumber(p.pos);
+      const posNum = p.posNum != null ? p.posNum : positionNumber(p.pos);
       const isWinner = posNum === 1;
       const isTop10 = posNum != null && posNum <= 10;
       // Bonuses: -5 for winner (T1 counts), -1 for top 10 (T1-T10). Winner also gets top-10 bonus (stacked: -6).

@@ -163,10 +163,10 @@ function render(data) {
     teamScores.push({ team, top5Total, allTotal, totalBonus, adjustedTotal, rows });
   }
 
-  // Sort by adjusted total ascending; tiebreak on top 5 raw, then all 10
+  // Sort by top 5 raw ascending; tiebreak on adjusted, then all 10
   teamScores.sort((a, b) =>
-    a.adjustedTotal - b.adjustedTotal ||
     a.top5Total - b.top5Total ||
+    a.adjustedTotal - b.adjustedTotal ||
     a.allTotal - b.allTotal
   );
   window._cutPenalty = cutPenalty;
@@ -181,8 +181,8 @@ function render(data) {
     tr.innerHTML = `
       <td>${i + 1}</td>
       <td>${t.team}</td>
-      <td class="num adj-total ${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</td>
-      <td class="num ${scoreClass(t.top5Total)}">${fmtScore(t.top5Total)}</td>
+      <td class="num lead-total ${scoreClass(t.top5Total)}">${fmtScore(t.top5Total)}</td>
+      <td class="num ${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</td>
       <td class="num bonus ${t.totalBonus < 0 ? 'under' : ''}">${bonusDisp}</td>
       <td class="num all-total ${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</td>
     `;
@@ -218,10 +218,10 @@ function render(data) {
         return `<li class="${classes.join(' ')}">${star}<span class="nm">${r.name}${pos}${thru}</span><span class="sc ${cls}">${display}${penaltyNote}${bonusTags.join('')}</span></li>`;
       })
       .join("");
-    const bonusDisp = t.totalBonus === 0 ? "" : ` <span class="bonus-inline">${t.totalBonus > 0 ? '+' : ''}${t.totalBonus} bonus</span>`;
+    const bonusDispC = t.totalBonus === 0 ? "" : ` <span class="bonus-inline">${t.totalBonus > 0 ? '+' : ''}${t.totalBonus} bonus</span>`;
     card.innerHTML = `
-      <h3>${t.team} <span class="tot ${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</span></h3>
-      <div class="subtitle">adjusted${bonusDisp} · top 5: <span class="${scoreClass(t.top5Total)}">${fmtScore(t.top5Total)}</span> · all 10: <span class="${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</span></div>
+      <h3>${t.team} <span class="tot ${scoreClass(t.top5Total)}">${fmtScore(t.top5Total)}</span></h3>
+      <div class="subtitle">top 5 · adjusted: <span class="${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</span>${bonusDispC} · all 10: <span class="${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</span></div>
       <ul>${playerRows}</ul>
     `;
     cards.appendChild(card);

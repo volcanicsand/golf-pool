@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PGA Championship Pool — 2026</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>PGA Championship Pool</h1>
+  <div class="meta">
+    <span id="event">—</span>
+    <span id="status">—</span>
+    <span id="round">—</span>
+    <span class="updated">updated <span id="updated">—</span></span>
+  </div>
+</header>
+
+<main>
+  <section id="teamboard">
+    <h2>Team Standings</h2>
+    <table id="teams">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Team</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="details">
+    <h2>By Team</h2>
+    <div id="team-cards"></div>
+  </section>
+
+  <section id="warnings" hidden>
+    <h2>Match warnings</h2>
+    <ul id="warn-list"></ul>
+  </section>
+</main>
+
+<footer>
+  <p>Auto-refreshes every 60 seconds. Data: ESPN public feed.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

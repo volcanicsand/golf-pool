@@ -450,6 +450,13 @@ function render(data) {
   const cutPenalty = madeCutScores.length > 0 ? Math.max(...madeCutScores) : 0;
   const anyCutsMade = fieldPlayers.some(p => /cut|wd|dq/i.test(p.status || ""));
 
+  // Count co-leaders in the full field so the winner bonus splits evenly among tied leaders
+  const leadersCount = Math.max(1, fieldPlayers.filter(p => {
+    const pn = p.posNum != null ? p.posNum : positionNumber(p.pos);
+    return pn === 1;
+  }).length);
+  const winnerBonus = 5 / leadersCount;
+
   const teamScores = [];
   const warnings = [];
 
@@ -471,9 +478,9 @@ function render(data) {
       const posNum = p.posNum != null ? p.posNum : positionNumber(p.pos);
       const isWinner = posNum === 1;
       const isTop10 = posNum != null && posNum <= 10;
-      // Bonuses: -5 for winner (T1 counts), -1 for top 10 (T1-T10). Winner also gets top-10 bonus (stacked: -6).
+      // Bonuses: -5/x for co-leaders (x = tied at #1), -1 for top 10. Stacks: sole leader gets -6.
       let bonus = 0;
-      if (isWinner) bonus -= 5;
+      if (isWinner) bonus -= winnerBonus;
       if (isTop10) bonus -= 1;
       rows.push({
         name: p.name,
@@ -540,7 +547,8 @@ function render(data) {
   tbody.innerHTML = "";
   teamScores.forEach((t, i) => {
     const tr = document.createElement("tr");
-    const bonusDisp = t.totalBonus === 0 ? "—" : (t.totalBonus > 0 ? `+${t.totalBonus}` : `${t.totalBonus}`);
+    const fmtBonus = n => n % 1 === 0 ? String(n) : n.toFixed(1);
+    const bonusDisp = t.totalBonus === 0 ? "—" : (t.totalBonus > 0 ? `+${fmtBonus(t.totalBonus)}` : fmtBonus(t.totalBonus));
     const poolPct = t.poolProb != null ? (t.poolProb * 100).toFixed(1) + "%" : "—";
     const proj = t.projection;
     let projDisp = "—";
@@ -587,12 +595,15 @@ function render(data) {
         const star = r.counts ? '<span class="star" title="Counts toward top 5">★</span> ' : '<span class="star-spacer">  </span>';
         const penaltyNote = r.penalized ? ` <span class="penalty-note">→ ${fmtScore(r.effectiveScore)}</span>` : "";
         const bonusTags = [];
-        if (r.isWinner) bonusTags.push('<span class="bonus-tag" title="-5 winner">WIN −5</span>');
-        else if (r.isTop10) bonusTags.push('<span class="bonus-tag" title="-1 top 10">T10 −1</span>');
+        if (r.isWinner) {
+          const wbStr = winnerBonus % 1 === 0 ? winnerBonus.toFixed(0) : winnerBonus.toFixed(1);
+          const label = leadersCount > 1 ? `WIN −${wbStr} (T${leadersCount})` : `WIN −5`;
+          bonusTags.push(`<span class="bonus-tag" title="-5 split ${leadersCount} ways">${label}</span>`);
+        } else if (r.isTop10) bonusTags.push('<span class="bonus-tag" title="-1 top 10">T10 −1</span>');
         return `<li class="${classes.join(' ')}">${star}<span class="nm">${r.name}${pos}${thru}</span><span class="sc ${cls}">${display}${penaltyNote}${bonusTags.join('')}</span></li>`;
       })
       .join("");
-    const bonusDispC = t.totalBonus === 0 ? "" : ` <span class="bonus-inline">${t.totalBonus > 0 ? '+' : ''}${t.totalBonus} bonus</span>`;
+    const bonusDispC = t.totalBonus === 0 ? "" : ` <span class="bonus-inline">${t.totalBonus > 0 ? '+' : ''}${fmtBonus(t.totalBonus)} bonus</span>`;
     card.innerHTML = `
       <h3>${t.team} <span class="tot ${scoreClass(t.top5Total)}">${fmtScore(t.top5Total)}</span></h3>
       <div class="subtitle">top 5 · adjusted: <span class="${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</span>${bonusDispC} · all 10: <span class="${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</span></div>

@@ -135,7 +135,7 @@ function updatePolymarketUI() {
   if (el) {
     el.textContent = polymarketUpdated
       ? `Polymarket odds: ${polymarketUpdated.toLocaleTimeString()}`
-      : "Polymarket odds: unavailable (using draft-pick priors)";
+      : "Polymarket odds: unavailable (using sportsbook baseline)";
   }
 }
 

@@ -543,11 +543,11 @@ function render(data) {
   }
 
   // Render leaderboard — official = adjusted (top 5 + bonuses); show raw top-5 and all-10 alongside
+  const fmtBonus = n => n % 1 === 0 ? String(n) : n.toFixed(1);
   const tbody = document.querySelector("#teams tbody");
   tbody.innerHTML = "";
   teamScores.forEach((t, i) => {
     const tr = document.createElement("tr");
-    const fmtBonus = n => n % 1 === 0 ? String(n) : n.toFixed(1);
     const bonusDisp = t.totalBonus === 0 ? "—" : (t.totalBonus > 0 ? `+${fmtBonus(t.totalBonus)}` : fmtBonus(t.totalBonus));
     const poolPct = t.poolProb != null ? (t.poolProb * 100).toFixed(1) + "%" : "—";
     const proj = t.projection;

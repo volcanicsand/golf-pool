@@ -208,6 +208,19 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
   const SKILL_SLOPE = 0.04;       // strokes per draft-pick per round; pick 25 = neutral
   const NEUTRAL_PICK = 25;
   const TOP_N = 5;
+  const TOTAL_ROUNDS = 4;
+
+  // --- Remaining-rounds rate model (regress current pace toward course baseline) ---
+  // For each remaining round, expected to-par score is a blend of:
+  //   - PACE_PERSISTENCE × current_pace  (how much current hot/cold form continues)
+  //   - (1 − PACE_PERSISTENCE) × baseline  (course difficulty + pick-based skill)
+  // PACE_PERSISTENCE: 0 = current pace ignored (full regression to baseline);
+  //                   1 = current pace continues unchanged (hot/cold extrapolates fully).
+  // COURSE_DIFFICULTY: expected per-round to-par average over remaining rounds for a
+  //                    neutral (pick 25) player. 0 = course plays scratch; +0.5 to +1.0
+  //                    typical for PGA Championship setups. Raise to dampen projections.
+  const PACE_PERSISTENCE = 0.15;
+  const COURSE_DIFFICULTY = 0.6;
 
   const teamWins = Object.fromEntries(TEAMS_ORDER.map(t => [t, 0]));
   const teamScoreHistory = Object.fromEntries(TEAMS_ORDER.map(t => [t, []]));
@@ -233,21 +246,28 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
   }
 
   const roundsRemaining = holesRemaining / 18;
+  const roundsPlayed = Math.max(0, TOTAL_ROUNDS - roundsRemaining);
   const sigma = STROKE_SD_PER_ROUND * Math.sqrt(roundsRemaining);
 
   // Pre-group by team for speed
   const teamPlayers = Object.fromEntries(TEAMS_ORDER.map(t => [t, allRows.filter(r => r.team === t)]));
 
   for (let s = 0; s < SIMS; s++) {
-    // 1. Sample final score for each player
+    // 1. Sample final score for each player.
+    //    Future per-round rate blends current pace with a course/skill baseline.
+    //    See PACE_PERSISTENCE / COURSE_DIFFICULTY at the top of this function.
     for (const r of allRows) {
       if (r.missed) {
         r._simFinal = null;       // ranked via cut penalty, not via score
       } else if (r.score == null) {
         r._simFinal = null;       // unknown; skip from leader/top-10 calc
       } else {
-        const skillAdj = (r.draftPick - NEUTRAL_PICK) * SKILL_SLOPE * roundsRemaining;
-        r._simFinal = r.score + skillAdj + randNormal(0, sigma);
+        const currentPace = roundsPlayed >= 0.5 ? r.score / roundsPlayed : 0;
+        const skillRate = (r.draftPick - NEUTRAL_PICK) * SKILL_SLOPE;
+        const baselineRate = COURSE_DIFFICULTY + skillRate;
+        const futureRate = PACE_PERSISTENCE * currentPace + (1 - PACE_PERSISTENCE) * baselineRate;
+        const expectedRemaining = futureRate * roundsRemaining;
+        r._simFinal = r.score + expectedRemaining + randNormal(0, sigma);
       }
     }
 

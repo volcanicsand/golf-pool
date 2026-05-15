@@ -8,11 +8,135 @@ const TEAMS = {
   "Tim":  ["Matt Fitzpatrick","Bryson DeChambeau","Justin Thomas","Justin Rose","Jordan Spieth","Kristoffer Reitan","Akshay Bhatia","Michael Thorbjornsen","Joaquin Niemann","Sungjae Im"],
 };
 
+// DraftKings win-only odds (American). Used as baseline prior; Polymarket overrides live.
+const DRAFTKINGS_ODDS = {
+  "Scottie Scheffler": 170, "Xander Schauffele": 1000, "Jon Rahm": 1300,
+  "Min Woo Lee": 1600, "Brooks Koepka": 2700, "Cameron Young": 3000,
+  "Collin Morikawa": 3000, "Jordan Spieth": 3300, "Matt Fitzpatrick": 3300,
+  "Patrick Reed": 3500, "Alex Smalley": 3500, "Shane Lowry": 3500,
+  "Nicolai Højgaard": 4000, "Ryo Hisatsune": 4000, "Justin Thomas": 4500,
+  "Patrick Cantlay": 4500, "Joaquin Niemann": 5500, "Sahith Theegala": 6000,
+  "Sam Burns": 6000, "Ludvig Åberg": 6000, "Rickie Fowler": 6000,
+  "Justin Rose": 6000, "Rory McIlroy": 6500, "Corey Conners": 6500,
+  "Maverick McNealy": 6500, "Robert MacIntyre": 6500, "Jason Day": 7000,
+  "J.J. Spaun": 7000, "Aldrich Potgieter": 8000, "Stephan Jaeger": 8000,
+  "Si Woo Kim": 10000, "Kurt Kitayama": 10000, "Hideki Matsuyama": 10000,
+  "Max Greyserman": 10000, "Tommy Fleetwood": 10000, "Ryan Gerard": 12500,
+  "Akshay Bhatia": 12500, "Bud Cauley": 12500, "Nick Taylor": 12500,
+  "Cameron Smith": 12500, "Samuel Stevens": 15000, "Chris Gotterup": 15000,
+  "Russell Henley": 15000, "Adam Scott": 17500, "Andrew Putnam": 17500,
+  "Andrew Novak": 17500, "Kristoffer Reitan": 17500, "Harris English": 17500,
+  "Dan Brown": 17500, "David Puig": 17500, "Tyrrell Hatton": 17500,
+  "Aaron Rai": 22500, "Ben Griffin": 22500, "Martin Kaymer": 22500,
+  "Alex Fitzpatrick": 22500, "Matti Schmid": 22500, "Alex Noren": 22500,
+  "Brian Harman": 25000, "J.T. Poston": 25000, "Ryan Fox": 35000,
+  "Gary Woodland": 35000, "Richard Hoey": 35000, "Thomas Detry": 35000,
+  "Garrick Higgo": 35000, "Pierceson Coody": 50000, "Casey Jarvis": 50000,
+  "Harry Hall": 50000, "Sepp Straka": 50000, "Matt Wallace": 50000,
+  "Chandler Blanchet": 50000, "Daniel Hillier": 50000, "Bryson DeChambeau": 50000,
+  "Denny McCarthy": 75000, "Haotong Li": 75000, "Viktor Hovland": 75000,
+  "Rasmus Højgaard": 75000, "Mikael Lindberg": 75000,
+  "Jimmy Walker": 100000, "Sami Valimaki": 100000, "Jayden Schaper": 100000,
+  "Michael Block": 100000, "Ben Kern": 100000, "Bryce Fisher": 100000,
+  "Michael Thorbjornsen": 100000, "Braden Shattuck": 100000,
+  "Bernd Wiesberger": 100000, "Y.E. Yang": 100000, "Derek Berg": 100000,
+  "Dustin Johnson": 100000, "Rasmus Neergaard-Petersen": 100000,
+  "Jhonattan Vegas": 100000, "Luke Donald": 100000, "Elvis Smylie": 100000,
+  "Taylor Pendrith": 100000, "Chris Kirk": 100000, "Timothy Wiseman": 100000,
+  "Ricky Castillo": 100000, "Michael Brennan": 100000, "Keith Mitchell": 100000,
+  "Jared Jones": 100000, "Steven Fisk": 100000, "Johnny Keefer": 100000,
+  "Tom McKibbin": 100000, "Ryan Vermeer": 100000, "Jordan Smith": 100000,
+  "Francisco Bidé": 100000, "Matt McCarty": 100000, "Paul McClure": 100000,
+  "Christiaan Bezuidenhout": 100000, "Angel Ayora": 100000, "Brian Campbell": 100000,
+  "Lucas Glover": 100000, "Austin Hurt": 100000, "Garrett Sapp": 100000,
+  "Stewart Cink": 100000, "Emiliano Grillo": 100000, "Marco Penge": 100000,
+  "Billy Horschel": 100000, "Adrien Saddier": 100000, "Padraig Harrington": 100000,
+  "Max Homa": 100000, "Adam Schenk": 100000, "Ben Polland": 100000,
+  "John Parry": 100000, "Max McGreevy": 100000, "Wyndham Clark": 100000,
+  "Kota Kaneko": 100000, "Davis Riley": 100000, "Michael Kim": 100000,
+  "Ian Holt": 100000, "David Lipsky": 100000, "Sungjae Im": 100000,
+  "Jordan Gumberg": 100000, "Daniel Berger": 100000, "Chris Gabriele": 100000,
+  "Travis Smyth": 100000, "Jason Dufner": 100000, "Joe Highsmith": 100000,
+  "Ryan Lenahan": 100000, "Keegan Bradley": 100000, "Mark Geddes": 100000,
+  "Tyler Collet": 100000, "Jacob Bridgeman": 100000, "Patrick Rodgers": 100000,
+  "Austin Smotherman": 100000, "Zach Haynes": 100000, "Kazuki Higa": 100000,
+  "Shaun Micheel": 100000, "Michael Kartrude": 100000, "Nico Echavarria": 100000,
+  "William Mouw": 100000, "Jesse Droemer": 100000, "Andy Sullivan": 100000,
+  "Brandt Snedeker": 100000, "Sudarshan Yellamaraju": 100000, "Tom Hoge": 100000,
+};
+
+// Convert American odds to implied prob, normalize to remove vig
+function americanToProb(odds) { return 100 / (odds + 100); }
+const _dkRaw = Object.fromEntries(
+  Object.entries(DRAFTKINGS_ODDS).map(([name, odds]) => [norm(name), americanToProb(odds)])
+);
+const _dkSum = Object.values(_dkRaw).reduce((s, p) => s + p, 0);
+const DK_PROBS = Object.fromEntries(Object.entries(_dkRaw).map(([k, v]) => [k, v / _dkSum]));
+
 const ESPN_URL = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
+const POLYMARKET_URL = "https://gamma-api.polymarket.com/markets";
 const REFRESH_MS = 60000;
 
 const TEAMS_ORDER = Object.keys(TEAMS);
 const TEAMS_COUNT = TEAMS_ORDER.length;
+
+// Live Polymarket win probabilities, keyed by norm(playerName)
+let polymarketOdds = {};
+let polymarketUpdated = null;
+
+function tryParseArray(val) {
+  if (Array.isArray(val)) return val;
+  try { return JSON.parse(val) || []; } catch { return []; }
+}
+
+async function fetchPolymarketOdds() {
+  const queries = [
+    "PGA Championship 2026 winner",
+    "PGA Championship winner",
+    "2026 PGA Championship",
+  ];
+  for (const q of queries) {
+    try {
+      const res = await fetch(`${POLYMARKET_URL}?keyword=${encodeURIComponent(q)}&active=true&limit=20`);
+      if (!res.ok) continue;
+      const markets = await res.json();
+
+      // Find a winner-style market: mentions PGA + win/champion + has many outcomes
+      const candidates = markets.filter(m => {
+        const title = (m.question || m.title || "").toLowerCase();
+        return title.includes("pga") && (title.includes("win") || title.includes("champion"));
+      });
+      candidates.sort((a, b) => tryParseArray(b.outcomes).length - tryParseArray(a.outcomes).length);
+
+      if (!candidates.length) continue;
+      const market = candidates[0];
+      const outcomes = tryParseArray(market.outcomes);
+      const prices = tryParseArray(market.outcomePrices);
+      if (outcomes.length < 5) continue;
+
+      const newOdds = {};
+      for (let i = 0; i < outcomes.length; i++) {
+        const prob = parseFloat(prices[i]) || 0;
+        if (prob > 0) newOdds[norm(outcomes[i])] = prob;
+      }
+      polymarketOdds = newOdds;
+      polymarketUpdated = new Date();
+      updatePolymarketUI();
+      return;
+    } catch (e) {
+      console.warn("Polymarket fetch failed for query:", q, e);
+    }
+  }
+}
+
+function updatePolymarketUI() {
+  const el = document.getElementById("polymarket-updated");
+  if (el) {
+    el.textContent = polymarketUpdated
+      ? `Polymarket odds: ${polymarketUpdated.toLocaleTimeString()}`
+      : "Polymarket odds: unavailable (using draft-pick priors)";
+  }
+}
 
 // Snake-draft: round 1 forward (John→Tim), round 2 reverse, etc.
 function getDraftPick(teamName, indexInTeam) {
@@ -22,8 +146,14 @@ function getDraftPick(teamName, indexInTeam) {
   return indexInTeam * TEAMS_COUNT + positionInRound + 1;
 }
 
-// Pre-tournament prior anchored to: pick 1 ≈ +450 (18.18%); pick 2 ≈ +1000 (9.09%); pick 50 ≈ +10000 (0.91%).
-function priorWinProb(pick) {
+// Prior win probability: Polymarket (live) → DraftKings (hardcoded baseline) → draft-pick fallback.
+function priorWinProb(playerName, pick) {
+  const key = norm(playerName);
+  const poly = polymarketOdds[key];
+  if (poly != null && poly > 0) return poly;
+  const dk = DK_PROBS[key];
+  if (dk != null && dk > 0) return dk;
+  // Final fallback: draft-pick prior (pick 1 ≈ 18.18%, pick 2 ≈ 9.09%, pick 50 ≈ 0.91%)
   if (pick <= 1) return 0.1818;
   const k = Math.log(0.0909 / 0.0091) / 48;
   return 0.0909 * Math.exp(-k * (pick - 2));
@@ -49,7 +179,7 @@ function estimateHolesRemaining(period, statusDescription) {
 
 function computeWinProbs(allRows, leaderScore, holesRemaining) {
   for (const row of allRows) {
-    row.prior = priorWinProb(row.draftPick);
+    row.prior = priorWinProb(row.name, row.draftPick);
     row.likelihood = liveLikelihood(row.score, leaderScore, row.missed, holesRemaining);
     row.rawWeight = row.prior * row.likelihood;
   }
@@ -80,6 +210,7 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
   const TOP_N = 5;
 
   const teamWins = Object.fromEntries(TEAMS_ORDER.map(t => [t, 0]));
+  const teamScoreHistory = Object.fromEntries(TEAMS_ORDER.map(t => [t, []]));
 
   // Handle the tournament-over case: deterministic winner based on current effective scores
   if (holesRemaining <= 0) {
@@ -93,9 +224,12 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
     }
     const minAdj = Math.min(...Object.values(teamAdj));
     const winners = TEAMS_ORDER.filter(t => teamAdj[t] === minAdj);
-    const out = Object.fromEntries(TEAMS_ORDER.map(t => [t, 0]));
-    for (const w of winners) out[w] = 1 / winners.length;
-    return out;
+    const winProbs = Object.fromEntries(TEAMS_ORDER.map(t => [t, 0]));
+    for (const w of winners) winProbs[w] = 1 / winners.length;
+    const projections = Object.fromEntries(TEAMS_ORDER.map(t => [t, {
+      p25: teamAdj[t], median: teamAdj[t], p75: teamAdj[t]
+    }]));
+    return { winProbs, projections };
   }
 
   const roundsRemaining = holesRemaining / 18;
@@ -153,11 +287,21 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
     }
     const winners = TEAMS_ORDER.filter(t => teamAdj[t] === minAdj);
     for (const w of winners) teamWins[w] += 1 / winners.length;
+    for (const t of TEAMS_ORDER) teamScoreHistory[t].push(teamAdj[t]);
   }
 
-  const out = {};
-  for (const t of TEAMS_ORDER) out[t] = teamWins[t] / SIMS;
-  return out;
+  const winProbs = {};
+  const projections = {};
+  for (const t of TEAMS_ORDER) {
+    winProbs[t] = teamWins[t] / SIMS;
+    const sorted = teamScoreHistory[t].slice().sort((a, b) => a - b);
+    projections[t] = {
+      p25:    sorted[Math.floor(SIMS * 0.25)],
+      median: sorted[Math.floor(SIMS * 0.50)],
+      p75:    sorted[Math.floor(SIMS * 0.75)],
+    };
+  }
+  return { winProbs, projections };
 }
 
 // Normalize for matching: lowercase, strip diacritics + non-decomposable letters, drop punctuation
@@ -290,6 +434,7 @@ function render(data) {
   const round = ev.status?.period ? `Round ${ev.status.period}` : "";
   document.getElementById("round").textContent = round;
   document.getElementById("updated").textContent = new Date().toLocaleTimeString();
+  updatePolymarketUI();
 
   // Build team scores — top 5 counts toward official ranking, all 10 tracked
   // Missed-cut players are assigned the worst score among players who made cut
@@ -383,10 +528,11 @@ function render(data) {
   }
   computeWinProbs(allRows, leaderScore, holesRemaining);
 
-  // Pool-win probability: Monte Carlo simulation of remaining tournament + scoring rules
-  const poolProbs = simulatePoolWins(allRows, holesRemaining, cutPenalty);
+  // Pool-win probability + final score projections: Monte Carlo simulation
+  const { winProbs: poolProbs, projections: teamProjections } = simulatePoolWins(allRows, holesRemaining, cutPenalty);
   for (const t of teamScores) {
     t.poolProb = poolProbs[t.team] || 0;
+    t.projection = teamProjections[t.team];
   }
 
   // Render leaderboard — official = adjusted (top 5 + bonuses); show raw top-5 and all-10 alongside
@@ -396,6 +542,14 @@ function render(data) {
     const tr = document.createElement("tr");
     const bonusDisp = t.totalBonus === 0 ? "—" : (t.totalBonus > 0 ? `+${t.totalBonus}` : `${t.totalBonus}`);
     const poolPct = t.poolProb != null ? (t.poolProb * 100).toFixed(1) + "%" : "—";
+    const proj = t.projection;
+    let projDisp = "—";
+    if (proj) {
+      const med = Math.round(proj.median);
+      const lo  = Math.round(proj.p25);
+      const hi  = Math.round(proj.p75);
+      projDisp = `<span class="${scoreClass(med)}">${fmtScore(med)}</span> <span class="proj-range">(${fmtScore(lo)}–${fmtScore(hi)})</span>`;
+    }
     tr.innerHTML = `
       <td>${i + 1}</td>
       <td>${t.team}</td>
@@ -403,6 +557,7 @@ function render(data) {
       <td class="num ${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</td>
       <td class="num bonus ${t.totalBonus < 0 ? 'under' : ''}">${bonusDisp}</td>
       <td class="num all-total ${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</td>
+      <td class="num proj">${projDisp}</td>
       <td class="num pool-prob">${poolPct}</td>
     `;
     tbody.appendChild(tr);
@@ -467,5 +622,6 @@ async function refresh() {
   }
 }
 
-refresh();
-setInterval(refresh, REFRESH_MS);
+// Kick off both fetches immediately, then refresh on the same interval
+Promise.all([fetchPolymarketOdds(), refresh()]);
+setInterval(() => { fetchPolymarketOdds(); refresh(); }, REFRESH_MS);

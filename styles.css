@@ -210,6 +210,9 @@ tr:last-child td { border-bottom: none; }
 }
 #teams td.adj-total { font-size: 16px; }
 #teams td.pool-prob { color: var(--accent); font-weight: 700; font-size: 15px; }
+#teams td.proj { font-size: 13px; }
+.proj-range { color: var(--muted); font-size: 11px; }
+.meta-secondary { margin-top: 4px; font-size: 12px; }
 .note {
   font-size: 12px;
   color: var(--muted);

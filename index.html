@@ -15,6 +15,9 @@
     <span id="round">—</span>
     <span class="updated">updated <span id="updated">—</span></span>
   </div>
+  <div class="meta meta-secondary">
+    <span id="polymarket-updated">Polymarket odds: loading…</span>
+  </div>
 </header>
 
 <main>
@@ -29,12 +32,13 @@
           <th class="num">Adjusted</th>
           <th class="num">Bonus</th>
           <th class="num">All 10</th>
+          <th class="num">Proj. Final</th>
           <th class="num">Pool %</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-    <p class="note">Ranking by <strong>Top 5</strong> (lowest 5 scores per team). <strong>Adjusted</strong> = Top 5 + Bonuses. Bonuses (projected from current standings): <strong>−5</strong> per tournament winner, <strong>−1</strong> per top-10 finish (applied to all 10 players). Missed-cut players use the worst made-cut score for top-5 ranking. <strong>Pool %</strong> = each team's probability of winning the pool, from a 3,000-run Monte Carlo simulation of the remaining holes. Each player's remaining scoring is sampled from N(current + skill, σ); skill is a function of their draft pick (pick 1 best, pick 50 worst); σ scales with holes left. Each simulated tournament has scoring rules applied (Top 5 + winner/top-10 bonuses) and the lowest adjusted total wins the pool.</p>
+    <p class="note">Ranking by <strong>Top 5</strong> (lowest 5 scores per team). <strong>Adjusted</strong> = Top 5 + Bonuses. Bonuses (projected from current standings): <strong>−5</strong> per tournament winner, <strong>−1</strong> per top-10 finish (applied to all 10 players). Missed-cut players use the worst made-cut score for top-5 ranking. <strong>Proj. Final</strong> = median projected final adjusted score from 3,000 Monte Carlo sims, with 25th–75th percentile range in parentheses. <strong>Pool %</strong> = each team's probability of winning the pool from the same simulations. Player win probabilities are sourced live from Polymarket (falling back to draft-pick priors if unavailable); remaining scoring variance scales with holes left.</p>
   </section>
 
   <section id="details">
@@ -49,7 +53,7 @@
 </main>
 
 <footer>
-  <p>Auto-refreshes every 60 seconds. Data: ESPN public feed.</p>
+  <p>Auto-refreshes every 60 seconds. Scores: ESPN public feed. Win probabilities: Polymarket (live) with DraftKings odds as baseline.</p>
 </footer>
 
 <script src="app.js"></script>

@@ -332,8 +332,10 @@ function parseScore(s) {
 
 function fmtScore(n) {
   if (n == null) return "—";
-  if (n === 0) return "E";
-  return n > 0 ? `+${n}` : `${n}`;
+  const r = Math.round(n * 10) / 10; // max 1 decimal place
+  if (r === 0) return "E";
+  const s = r % 1 === 0 ? String(r) : r.toFixed(1);
+  return r > 0 ? `+${s}` : s;
 }
 
 function scoreClass(n) {

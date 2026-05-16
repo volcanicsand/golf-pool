@@ -128,12 +128,23 @@ tr:last-child td { border-bottom: none; }
 .card li .sc { font-variant-numeric: tabular-nums; color: var(--muted); }
 .card li .sc.under { color: var(--green); font-weight: 600; }
 .card li .sc.over { color: var(--red); }
-.card li.missed-cut { opacity: 0.45; }
+.card li.missed-cut { opacity: 0.5; }
+.card li.missed-cut .nm {
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+}
 .card li.missed-cut .nm::after {
-  content: " — CUT";
+  content: " CUT";
+  text-decoration: none;
+  display: inline-block;
   color: var(--red);
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 0.5px;
+  background: rgba(210, 76, 59, 0.15);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 6px;
 }
 .card li.not-found { opacity: 0.5; }
 .card li.not-found .nm::after {

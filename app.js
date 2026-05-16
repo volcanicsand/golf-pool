@@ -586,7 +586,7 @@ function render(data) {
         const cls = scoreClass(r.score);
         const display = r.score == null ? (r.rawScore || "—") : fmtScore(r.score);
         const thru = r.thru ? ` <span class="thru">thru ${r.thru}</span>` : "";
-        const pos = r.pos ? ` <span class="pos">${r.pos}</span>` : "";
+        const pos = (r.pos && !r.missed) ? ` <span class="pos">${r.pos}</span>` : "";
         const classes = [];
         if (r.missed) classes.push("missed-cut");
         if (r.counts) classes.push("counts");

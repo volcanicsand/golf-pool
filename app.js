@@ -9,60 +9,35 @@ const TEAMS = {
 };
 
 // Sportsbook win-only odds (American). Used as baseline prior; Polymarket overrides live.
-// Last updated: 2026-05-15 (post-R1).
+// Updated R4 2026 PGA Championship
 const DRAFTKINGS_ODDS = {
-  "Scottie Scheffler": 310, "Xander Schauffele": 850, "Min Woo Lee": 1200,
-  "Jon Rahm": 1200, "Alex Smalley": 1200, "Hideki Matsuyama": 1800,
-  "Cameron Young": 2200, "Brooks Koepka": 2200, "Patrick Reed": 2700,
-  "Justin Thomas": 2700, "Jordan Spieth": 3000, "Kurt Kitayama": 3500,
-  "Nicolai Højgaard": 3500, "Ryo Hisatsune": 4000, "Chris Gotterup": 4000,
-  "Patrick Cantlay": 4000, "Sahith Theegala": 5000, "Rickie Fowler": 5000,
-  "Joaquin Niemann": 5000, "Maverick McNealy": 5000, "Sam Burns": 5500,
-  "Rory McIlroy": 5500, "Aldrich Potgieter": 6000, "Ludvig Åberg": 6000,
-  "Collin Morikawa": 6500, "Jason Day": 6500, "Matt Fitzpatrick": 8000,
-  "Stephan Jaeger": 8000, "Ryan Gerard": 10000, "Si Woo Kim": 10000,
-  "Bud Cauley": 10000, "Max Greyserman": 10000, "Cameron Smith": 12500,
-  "Robert MacIntyre": 12500, "Tyrrell Hatton": 15000, "Harris English": 15000,
-  "Dan Brown": 17500, "Ben Griffin": 17500, "David Puig": 17500,
-  "Haotong Li": 17500, "Kristoffer Reitan": 17500, "Nick Taylor": 17500,
-  "Brian Harman": 17500, "Aaron Rai": 22500, "Alex Noren": 22500,
-  "Alex Fitzpatrick": 22500, "Shane Lowry": 22500, "Chandler Blanchet": 22500,
-  "Andrew Novak": 22500, "Corey Conners": 22500, "Thomas Detry": 25000,
-  "Ryan Fox": 25000, "Garrick Higgo": 25000, "Richard Hoey": 25000,
-  "Tommy Fleetwood": 35000, "Gary Woodland": 35000, "Harry Hall": 50000,
-  "Denny McCarthy": 50000, "Mikael Lindberg": 50000, "Rasmus Højgaard": 75000,
-  "Justin Rose": 75000, "Matti Schmid": 75000, "Elvis Smylie": 75000,
-  "Daniel Hillier": 75000, "Dustin Johnson": 75000, "Michael Brennan": 75000,
-  "Samuel Stevens": 75000, "Angel Ayora": 75000,
-  "Casey Jarvis": 100000, "Russell Henley": 100000, "Andrew Putnam": 100000,
-  "Jayden Schaper": 100000, "Michael Block": 100000, "Ben Kern": 100000,
-  "Pierceson Coody": 100000, "Sami Valimaki": 100000, "Jimmy Walker": 100000,
-  "Jhonattan Vegas": 100000, "Braden Shattuck": 100000, "Derek Berg": 100000,
-  "Y.E. Yang": 100000, "Michael Thorbjornsen": 100000, "Bernd Wiesberger": 100000,
-  "Jordan Smith": 100000, "Bryce Fisher": 100000, "Chris Kirk": 100000,
-  "Viktor Hovland": 100000, "Taylor Pendrith": 100000, "Adam Scott": 100000,
-  "Steven Fisk": 100000, "Rasmus Neergaard-Petersen": 100000, "Ricky Castillo": 100000,
-  "Timothy Wiseman": 100000, "Luke Donald": 100000, "Tom McKibbin": 100000,
-  "Johnny Keefer": 100000, "Austin Hurt": 100000, "Akshay Bhatia": 100000,
-  "Keith Mitchell": 100000, "Paul McClure": 100000, "Martin Kaymer": 100000,
-  "Ryan Vermeer": 100000, "Jared Jones": 100000, "Emiliano Grillo": 100000,
-  "Christiaan Bezuidenhout": 100000, "Max Homa": 100000, "Max McGreevy": 100000,
-  "Matt McCarty": 100000, "Billy Horschel": 100000, "Garrett Sapp": 100000,
-  "Francisco Bidé": 100000, "Stewart Cink": 100000, "Padraig Harrington": 100000,
-  "Adam Schenk": 100000, "Adrien Saddier": 100000, "Sungjae Im": 100000,
-  "Marco Penge": 100000, "Daniel Berger": 100000, "John Parry": 100000,
-  "Brian Campbell": 100000, "Jacob Bridgeman": 100000, "Kota Kaneko": 100000,
-  "Wyndham Clark": 100000, "Michael Kim": 100000, "Shaun Micheel": 100000,
-  "Ben Polland": 100000, "J.J. Spaun": 100000, "Ryan Lenahan": 100000,
-  "David Lipsky": 100000, "Chris Gabriele": 100000, "William Mouw": 100000,
-  "Jason Dufner": 100000, "Lucas Glover": 100000, "Mark Geddes": 100000,
-  "Keegan Bradley": 100000, "Jordan Gumberg": 100000, "Jesse Droemer": 100000,
-  "Joe Highsmith": 100000, "Kazuki Higa": 100000, "Davis Riley": 100000,
-  "Bryson DeChambeau": 100000, "Michael Kartrude": 100000, "Zach Haynes": 100000,
-  "Austin Smotherman": 100000, "Patrick Rodgers": 100000, "Travis Smyth": 100000,
-  "Sepp Straka": 100000, "Andy Sullivan": 100000, "Nico Echavarria": 100000,
-  "Matt Wallace": 100000, "J.T. Poston": 100000, "Ian Holt": 100000,
-  "Tyler Collet": 100000, "Brandt Snedeker": 100000, "Sudarshan Yellamaraju": 100000,
+  "Ludvig Åberg": 550, "Jon Rahm": 1000, "Maverick McNealy": 850,
+  "Chris Gotterup": 750, "Scottie Scheffler": 1200, "Rory McIlroy": 1300,
+  "Min Woo Lee": 1500, "Aaron Rai": 1200, "Cameron Young": 2000,
+  "Nick Taylor": 3000, "Hideki Matsuyama": 2700, "Justin Thomas": 2500,
+  "Xander Schauffele": 2200, "Stephan Jaeger": 2700, "David Puig": 3000,
+  "Max Greyserman": 4000, "Si Woo Kim": 5000, "Aldrich Potgieter": 5500,
+  "Matti Schmid": 5500, "Harris English": 5500, "Patrick Cantlay": 6500,
+  "Patrick Reed": 10000, "Alex Smalley": 6500, "Justin Rose": 7000,
+  "Joaquin Niemann": 10000, "Cameron Smith": 10000, "Brooks Koepka": 12500,
+  "Haotong Li": 15000, "Kristoffer Reitan": 12500, "Ben Griffin": 12500,
+  "Chris Kirk": 15000, "Sam Burns": 17500, "Bud Cauley": 15000,
+  "Rickie Fowler": 17500, "Nicolai Højgaard": 50000, "Brian Harman": 75000,
+  "Andrew Novak": 50000, "Jason Day": 75000, "Martin Kaymer": 50000,
+  "Sami Valimaki": 100000, "Ben Kern": 100000, "Sahith Theegala": 100000,
+  "Ryan Gerard": 100000, "Alex Noren": 100000, "Dustin Johnson": 100000,
+  "Rasmus Neergaard-Petersen": 100000, "Andrew Putnam": 100000, "Ryan Fox": 100000,
+  "Kurt Kitayama": 100000, "Jhonattan Vegas": 100000, "Luke Donald": 100000,
+  "Daniel Hillier": 100000, "Elvis Smylie": 100000, "Taylor Pendrith": 100000,
+  "Jordan Spieth": 100000, "Michael Brennan": 100000, "Denny McCarthy": 100000,
+  "Keith Mitchell": 100000, "Johnny Keefer": 100000, "Ryo Hisatsune": 100000,
+  "Casey Jarvis": 100000, "Samuel Stevens": 100000, "Dan Brown": 100000,
+  "Richard Hoey": 100000, "Christiaan Bezuidenhout": 100000, "Rasmus Højgaard": 100000,
+  "Matt Fitzpatrick": 100000, "Brian Campbell": 100000, "Padraig Harrington": 100000,
+  "Alex Fitzpatrick": 100000, "John Parry": 100000, "Collin Morikawa": 100000,
+  "Corey Conners": 100000, "Michael Kim": 100000, "Daniel Berger": 100000,
+  "Shane Lowry": 100000, "Kazuki Higa": 100000, "Matt Wallace": 100000,
+  "William Mouw": 100000, "Chandler Blanchet": 100000, "Mikael Lindberg": 75000,
   "Tom Hoge": 100000,
 };
 
@@ -272,9 +247,8 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
       }
     }
 
-    // 2. Recompute cut penalty for this sim = max of made-cut sim finals
-    const madeFinals = allRows.filter(r => !r.missed && r._simFinal != null).map(r => r._simFinal);
-    const simCutPenalty = madeFinals.length > 0 ? Math.max(...madeFinals) : cutPenalty;
+    // 2. Cut penalty is fixed from the full ESPN field — missed players' fates are sealed
+    const simCutPenalty = cutPenalty;
 
     // 3. Determine sim winner + sim top 10 (only among non-missed-cut players with a score)
     const playing = allRows.filter(r => !r.missed && r._simFinal != null);
@@ -529,12 +503,14 @@ function render(data) {
     playersWithScore.slice(0, TOP_N).forEach(r => { r.counts = true; });
 
     const top5Total = playersWithScore.slice(0, TOP_N).reduce((s, r) => s + r.effectiveScore, 0);
-    const allTotal = rows.filter(r => r.score != null).reduce((s, r) => s + r.score, 0);
+    const livePlayers = rows.filter(r => r.score != null && !r.missed);
+    const allTotal = livePlayers.reduce((s, r) => s + r.score, 0);
+    const liveCount = livePlayers.length;
     // Bonus applies based on ALL team players' positions (not just top 5)
     const totalBonus = rows.reduce((s, r) => s + (r.bonus || 0), 0);
     const adjustedTotal = top5Total + totalBonus;
 
-    teamScores.push({ team, top5Total, allTotal, totalBonus, adjustedTotal, rows });
+    teamScores.push({ team, top5Total, allTotal, liveCount, totalBonus, adjustedTotal, rows });
   }
 
   // Sort by top 5 raw ascending; tiebreak on adjusted, then all 10
@@ -587,7 +563,7 @@ function render(data) {
       <td class="num lead-total ${scoreClass(t.top5Total)}">${fmtScore(t.top5Total)}</td>
       <td class="num ${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</td>
       <td class="num bonus ${t.totalBonus < 0 ? 'under' : ''}">${bonusDisp}</td>
-      <td class="num all-total ${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</td>
+      <td class="num all-total ${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)} (${t.liveCount})</td>
       <td class="num proj">${projDisp}</td>
       <td class="num pool-prob">${poolPct}</td>
     `;
@@ -629,7 +605,7 @@ function render(data) {
     const bonusDispC = t.totalBonus === 0 ? "" : ` <span class="bonus-inline">${t.totalBonus > 0 ? '+' : ''}${fmtBonus(t.totalBonus)} bonus</span>`;
     card.innerHTML = `
       <h3>${t.team} <span class="tot ${scoreClass(t.top5Total)}">${fmtScore(t.top5Total)}</span></h3>
-      <div class="subtitle">top 5 · adjusted: <span class="${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</span>${bonusDispC} · all 10: <span class="${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</span></div>
+      <div class="subtitle">top 5 · adjusted: <span class="${scoreClass(t.adjustedTotal)}">${fmtScore(t.adjustedTotal)}</span>${bonusDispC} · live: <span class="${scoreClass(t.allTotal)}">${fmtScore(t.allTotal)}</span> (${t.liveCount})</div>
       <ul>${playerRows}</ul>
     `;
     cards.appendChild(card);

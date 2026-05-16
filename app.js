@@ -350,11 +350,15 @@ function buildPlayerIndex(competitors) {
   // Compute positions client-side from current scores so we don't depend on
   // ESPN populating position.displayName (which isn't always set during play).
   // Players with a missed-cut/WD/DQ status are excluded from position ranking.
+  // Fallback: if ESPN doesn't provide status, detect cut via linescores count —
+  // players with fewer rounds of data than the max have missed the cut.
+  const maxRounds = Math.max(...competitors.map(p => (p.linescores || []).length), 0);
   const active = [];
   const sidelined = [];
   for (const p of competitors) {
     const status = p.status?.type?.description || "";
-    if (/cut|wd|dq/i.test(status)) {
+    const rounds = (p.linescores || []).length;
+    if (/cut|wd|dq/i.test(status) || (maxRounds > 2 && rounds < maxRounds)) {
       sidelined.push(p);
     } else {
       active.push(p);
@@ -391,6 +395,7 @@ function buildPlayerIndex(competitors) {
     posMap.set(p.athlete?.displayName, { num: null, label: "CUT" });
   }
 
+  const sidelinedNames = new Set(sidelined.map(p => p.athlete?.displayName));
   const idx = new Map();
   for (const p of competitors) {
     const name = p.athlete?.displayName || "";
@@ -403,6 +408,7 @@ function buildPlayerIndex(competitors) {
       posNum: computed.num,
       thru: p.status?.thru || "",
       status: p.status?.type?.description || "",
+      missed: sidelinedNames.has(name),
     });
   }
   return idx;
@@ -441,11 +447,11 @@ function render(data) {
   // Compute cut penalty: worst (highest) score among players who did NOT miss cut
   const fieldPlayers = [...idx.values()];
   const madeCutScores = fieldPlayers
-    .filter(p => !/cut|wd|dq/i.test(p.status || ""))
+    .filter(p => !p.missed)
     .map(p => parseScore(p.score))
     .filter(s => s != null);
   const cutPenalty = madeCutScores.length > 0 ? Math.max(...madeCutScores) : 0;
-  const anyCutsMade = fieldPlayers.some(p => /cut|wd|dq/i.test(p.status || ""));
+  const anyCutsMade = fieldPlayers.some(p => p.missed);
 
   // Count co-leaders in the full field so the winner bonus splits evenly among tied leaders
   const leadersCount = Math.max(1, fieldPlayers.filter(p => {
@@ -469,7 +475,7 @@ function render(data) {
         continue;
       }
       const score = parseScore(p.score);
-      const missed = /cut|wd|dq/i.test(p.status || "");
+      const missed = p.missed;
       const effectiveScore = missed && score != null ? cutPenalty : score;
       const penalized = missed && score != null && effectiveScore !== score;
       const posNum = p.posNum != null ? p.posNum : positionNumber(p.pos);

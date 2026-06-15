@@ -1,6 +1,6 @@
-# PGA Championship Pool — live tracker
+# U.S. Open Pool — live tracker
 
-Static HTML page that pulls live PGA Championship scoring from ESPN's public feed and aggregates by team for our pool.
+Static HTML page that pulls live U.S. Open scoring from ESPN's public feed and aggregates by team for our pool.
 
 ## Pool structure
 

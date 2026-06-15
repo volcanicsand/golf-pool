@@ -1,44 +1,17 @@
-// PGA Championship Pool — live leaderboard from ESPN public feed
+// U.S. Open Pool — live leaderboard from ESPN public feed
 
 const TEAMS = {
-  "John": ["Scottie Scheffler","Tommy Fleetwood","Collin Morikawa","Min Woo Lee","Si Woo Kim","Nicolai Hojgaard","Hideki Matsuyama","Maverick McNealy","Kurt Kitayama","David Puig"],
-  "TQ":   ["Cameron Young","Brooks Koepka","Patrick Cantlay","Chris Gotterup","Adam Scott","J.J. Spaun","Alex Fitzpatrick","Shane Lowry","Gary Woodland","Keegan Bradley"],
-  "Sam":  ["Rory McIlroy","Ludvig Aberg","Tyrrell Hatton","Viktor Hovland","Patrick Reed","Harris English","Corey Conners","Matt McCarty","Jason Day","Alex Smalley"],
-  "Coz":  ["Jon Rahm","Xander Schauffele","Russell Henley","Rickie Fowler","Sam Burns","Robert MacIntyre","Sepp Straka","Ben Griffin","Thomas Detry","Wyndham Clark"],
-  "Tim":  ["Matt Fitzpatrick","Bryson DeChambeau","Justin Thomas","Justin Rose","Jordan Spieth","Kristoffer Reitan","Akshay Bhatia","Michael Thorbjornsen","Joaquin Niemann","Sungjae Im"],
+  "John": [],
+  "TQ":   [],
+  "Sam":  [],
+  "Coz":  [],
+  "Tim":  [],
 };
 
 // Sportsbook win-only odds (American). Used as baseline prior; Polymarket overrides live.
-// Updated R4 Sunday 2026 PGA Championship
 const DRAFTKINGS_ODDS = {
-  "Alex Smalley": 480, "Jon Rahm": 500, "Ludvig Åberg": 650,
-  "Rory McIlroy": 700, "Xander Schauffele": 1200, "Scottie Scheffler": 1600,
-  "Aaron Rai": 1800, "Nick Taylor": 1800, "Patrick Reed": 2200,
-  "Maverick McNealy": 2700, "Matti Schmid": 3000, "Min Woo Lee": 4000,
-  "Hideki Matsuyama": 4000, "Chris Gotterup": 4000, "Justin Rose": 4000,
-  "Joaquin Niemann": 5500, "Brooks Koepka": 6000, "Kristoffer Reitan": 6500,
-  "Ben Griffin": 6500, "Cameron Smith": 7000, "Rickie Fowler": 8000,
-  "Chris Kirk": 10000, "Sam Burns": 10000, "Cameron Young": 10000,
-  "Bud Cauley": 10000, "Max Greyserman": 10000, "David Puig": 12500,
-  "Harris English": 15000, "Si Woo Kim": 17500, "Justin Thomas": 17500,
-  "Nicolai Højgaard": 17500, "Martin Kaymer": 17500, "Brian Harman": 22500,
-  "Mikael Lindberg": 25000, "Jordan Spieth": 35000, "Aldrich Potgieter": 35000,
-  "Andrew Novak": 50000, "Dustin Johnson": 75000, "Stephan Jaeger": 75000,
-  "Michael Kim": 75000, "Sami Valimaki": 100000, "Ben Kern": 100000,
-  "Sahith Theegala": 100000, "Haotong Li": 100000, "Ryan Gerard": 100000,
-  "Alex Noren": 100000, "Rasmus Neergaard-Petersen": 100000, "Andrew Putnam": 100000,
-  "Ryan Fox": 100000, "Kurt Kitayama": 100000, "Jhonattan Vegas": 100000,
-  "Luke Donald": 100000, "Daniel Hillier": 100000, "Elvis Smylie": 100000,
-  "Taylor Pendrith": 100000, "Michael Brennan": 100000, "Denny McCarthy": 100000,
-  "Keith Mitchell": 100000, "Johnny Keefer": 100000, "Ryo Hisatsune": 100000,
-  "Casey Jarvis": 100000, "Jason Day": 100000, "Samuel Stevens": 100000,
-  "Dan Brown": 100000, "Richard Hoey": 100000, "Christiaan Bezuidenhout": 100000,
-  "Rasmus Højgaard": 100000, "Matt Fitzpatrick": 100000, "Brian Campbell": 100000,
-  "Padraig Harrington": 100000, "Alex Fitzpatrick": 100000, "John Parry": 100000,
-  "Collin Morikawa": 100000, "Corey Conners": 100000, "Daniel Berger": 100000,
-  "Shane Lowry": 100000, "Kazuki Higa": 100000, "Patrick Cantlay": 100000,
-  "Matt Wallace": 100000, "William Mouw": 100000, "Chandler Blanchet": 100000,
-  "Tom Hoge": 100000,
+  // Emptied for the U.S. Open. Paste current U.S. Open win odds (American) here to
+  // restore the baseline prior; until then live Polymarket + draft-pick fallback supply it.
 };
 
 // Convert American odds to implied prob, normalize to remove vig
@@ -67,9 +40,9 @@ function tryParseArray(val) {
 
 async function fetchPolymarketOdds() {
   const queries = [
-    "PGA Championship 2026 winner",
-    "PGA Championship winner",
-    "2026 PGA Championship",
+    "U.S. Open 2026 winner",
+    "US Open golf winner",
+    "2026 U.S. Open golf",
   ];
   for (const q of queries) {
     try {
@@ -77,10 +50,10 @@ async function fetchPolymarketOdds() {
       if (!res.ok) continue;
       const markets = await res.json();
 
-      // Find a winner-style market: mentions PGA + win/champion + has many outcomes
+      // Find a winner-style market: mentions (U.S.) Open + win/champion + has many outcomes
       const candidates = markets.filter(m => {
         const title = (m.question || m.title || "").toLowerCase();
-        return title.includes("pga") && (title.includes("win") || title.includes("champion"));
+        return title.includes("open") && (title.includes("win") || title.includes("champion"));
       });
       candidates.sort((a, b) => tryParseArray(b.outcomes).length - tryParseArray(a.outcomes).length);
 
@@ -194,7 +167,7 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
   //                   1 = current pace continues unchanged (hot/cold extrapolates fully).
   // COURSE_DIFFICULTY: expected per-round to-par average over remaining rounds for a
   //                    neutral (pick 25) player. 0 = course plays scratch; +0.5 to +1.0
-  //                    typical for PGA Championship setups. Raise to dampen projections.
+  //                    typical for U.S. Open setups. Raise to dampen projections.
   const PACE_PERSISTENCE = 0.15;
   const COURSE_DIFFICULTY = 0.6;
 
@@ -274,7 +247,7 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
       let bonus = 0;
       for (const p of players) {
         if (p._simIsWinner) bonus -= 5;
-        if (p._simIsTop10) bonus -= 1;
+        if (p._simIsTop10 && !p._simIsWinner) bonus -= 1;
       }
       const adj = top5 + bonus;
       teamAdj[t] = adj;
@@ -481,10 +454,10 @@ function render(data) {
       const posNum = p.posNum != null ? p.posNum : positionNumber(p.pos);
       const isWinner = posNum === 1;
       const isTop10 = posNum != null && posNum <= 10;
-      // Bonuses: -5/x for co-leaders (x = tied at #1), -1 for top 10. Stacks: sole leader gets -6.
+      // Bonuses: -5/x for co-leaders (x = tied at #1); -1 for top 10 but NOT the winner (no stacking). Sole leader gets -5.
       let bonus = 0;
       if (isWinner) bonus -= winnerBonus;
-      if (isTop10) bonus -= 1;
+      if (isTop10 && !isWinner) bonus -= 1;
       rows.push({
         name: p.name,
         rawScore: p.score,

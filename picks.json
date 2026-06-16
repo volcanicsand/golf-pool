@@ -1,0 +1,11 @@
+{
+  "teams": ["Coz", "Tim", "TQ", "Sam", "John"],
+  "rounds": 10,
+  "rosters": {
+    "Coz": [],
+    "Tim": [],
+    "TQ": [],
+    "Sam": [],
+    "John": []
+  }
+}

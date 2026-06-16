@@ -21,24 +21,9 @@
 </header>
 
 <main>
-  <section id="draft">
-    <h2>Draft</h2>
-    <details open>
-      <summary>Enter / edit picks</summary>
-      <p class="note">Type each pick into the grid in <strong>snake order</strong> (Round 1 left→right, Round 2 right→left, and so on). Start typing a golfer's name and choose from the suggestions so it matches the live field. Picks save in this browser automatically and build the rosters below — lowest 5 of each team's 10 count. Rename a team by editing its header.</p>
-      <div id="draft-onclock" class="draft-onclock">—</div>
-      <div id="draft-board"></div>
-      <div class="draft-controls">
-        <button id="draft-undo" type="button">Undo last pick</button>
-        <button id="draft-clear" type="button">Clear draft</button>
-        <button id="draft-export" type="button">Export / share</button>
-      </div>
-      <textarea id="draft-export-out" class="draft-export-out" readonly hidden rows="9" aria-label="Exported draft — copy and send to publish"></textarea>
-    </details>
-  </section>
-
   <section id="teamboard">
     <h2>Team Standings</h2>
+    <p class="note">Board updates automatically as picks come in and as scores change — no need to refresh.</p>
     <table id="teams">
       <thead>
         <tr>
@@ -72,7 +57,6 @@
   <p>Auto-refreshes every 60 seconds. Scores: ESPN public feed. Win probabilities: Polymarket (live) with DraftKings odds as baseline.</p>
 </footer>
 
-<datalist id="field-names"></datalist>
 <script src="app.js"></script>
 </body>
 </html>

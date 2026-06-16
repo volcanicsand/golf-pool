@@ -3,9 +3,9 @@
   "rounds": 10,
   "rosters": {
     "Coz": ["Scottie Scheffler"],
-    "Tim": [],
-    "TQ": [],
-    "Sam": [],
+    "Tim": ["Rory McIlroy"],
+    "TQ": ["Cameron Young"],
+    "Sam": ["Xander Schauffele"],
     "John": []
   }
 }

@@ -6,6 +6,10 @@ const DEFAULT_TEAMS = ["Coz", "Tim", "TQ", "Sam", "John"];  // draft order (rand
 const DRAFT_ROUNDS = 10;   // picks per team; lowest 5 count toward scoring
 const DRAFT_KEY = "golfPoolDraft_usopen_2026";
 
+// Once a draft is final, paste the exported block here and push — then the live
+// site shows the same board to everyone (any viewer who hasn't drafted locally).
+const PRESET_DRAFT = { teams: null, picks: [] };
+
 let TEAMS = {};            // { teamName: [golfer, ...] } — rebuilt by applyDraft()
 let TEAMS_ORDER = [];      // team names in draft order — set by applyDraft()
 let TEAMS_COUNT = 0;       // set by applyDraft()
@@ -636,6 +640,11 @@ function loadDraft() {
       return { teams: s.teams.slice(), rounds: s.rounds || DRAFT_ROUNDS, picks: s.picks.slice() };
     }
   } catch {}
+  // No local draft → use the published (code-baked) draft if one exists, so every
+  // visitor sees the same board (this is how the old hardcoded rosters worked).
+  if (PRESET_DRAFT && Array.isArray(PRESET_DRAFT.picks) && PRESET_DRAFT.picks.some(p => p && p.trim())) {
+    return { teams: (PRESET_DRAFT.teams || DEFAULT_TEAMS).slice(), rounds: DRAFT_ROUNDS, picks: PRESET_DRAFT.picks.slice() };
+  }
   return { teams: DEFAULT_TEAMS.slice(), rounds: DRAFT_ROUNDS, picks: [] };
 }
 
@@ -759,6 +768,22 @@ function initDraft() {
     if (!confirm("Clear all picks and reset team names? This cannot be undone.")) return;
     draft = { teams: DEFAULT_TEAMS.slice(), rounds: DRAFT_ROUNDS, picks: [] };
     saveDraft(); applyDraft(); renderFromCache(); renderDraft(true);
+  });
+  const exportBtn = document.getElementById("draft-export");
+  if (exportBtn) exportBtn.addEventListener("click", () => {
+    const rosters = draft.teams.map((t, c) => {
+      const ps = [];
+      for (let r = 0; r < draft.rounds; r++) {
+        const p = (draft.picks[pickIndex(r, c)] || "").trim();
+        if (p) ps.push(p);
+      }
+      return `${t}: ${ps.join(", ")}`;
+    }).join("\n");
+    const block = `const PRESET_DRAFT = ${JSON.stringify({ teams: draft.teams, picks: draft.picks })};`;
+    const text = rosters + "\n\n--- paste this whole message to publish for everyone ---\n" + block;
+    const out = document.getElementById("draft-export-out");
+    if (out) { out.hidden = false; out.value = text; out.focus(); out.select(); }
+    try { if (navigator.clipboard) navigator.clipboard.writeText(text); } catch {}
   });
   renderDraft();
 }

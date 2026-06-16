@@ -296,6 +296,17 @@ tr:last-child td { border-bottom: none; }
   cursor: pointer;
 }
 .draft-controls button:hover { border-color: var(--accent); color: var(--accent); }
+.draft-export-out {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
 @media (max-width: 600px) {
   .draft-table input { font-size: 12px; padding: 4px; }
   .draft-table td.rnd { width: 26px; }

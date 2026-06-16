@@ -2,7 +2,7 @@
   "teams": ["Coz", "Tim", "TQ", "Sam", "John"],
   "rounds": 10,
   "rosters": {
-    "Coz": [],
+    "Coz": ["Scottie Scheffler"],
     "Tim": [],
     "TQ": [],
     "Sam": [],

@@ -2,10 +2,10 @@
   "teams": ["Coz", "Tim", "TQ", "Sam", "John"],
   "rounds": 10,
   "rosters": {
-    "Coz": ["Scottie Scheffler"],
-    "Tim": ["Rory McIlroy", "Brooks Koepka"],
-    "TQ": ["Cameron Young", "Ludvig Åberg"],
-    "Sam": ["Xander Schauffele", "Matt Fitzpatrick"],
+    "Coz": ["Scottie Scheffler", "Bryson DeChambeau", "Collin Morikawa"],
+    "Tim": ["Rory McIlroy", "Brooks Koepka", "Wyndham Clark"],
+    "TQ": ["Cameron Young", "Ludvig Åberg", "Si Woo Kim"],
+    "Sam": ["Xander Schauffele", "Matt Fitzpatrick", "Sam Burns"],
     "John": ["Jon Rahm", "Tommy Fleetwood"]
   }
 }

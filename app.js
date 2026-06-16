@@ -2,7 +2,7 @@
 
 // Team names in draft order. Rosters are filled from the Draft panel (typed picks,
 // saved in the browser) — see the Draft section at the bottom of this file.
-const DEFAULT_TEAMS = ["John", "TQ", "Sam", "Coz", "Tim"];
+const DEFAULT_TEAMS = ["Coz", "Tim", "TQ", "Sam", "John"];  // draft order (random roll)
 const DRAFT_ROUNDS = 10;   // picks per team; lowest 5 count toward scoring
 const DRAFT_KEY = "golfPoolDraft_usopen_2026";
 

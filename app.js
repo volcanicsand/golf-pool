@@ -1,12 +1,14 @@
 // U.S. Open Pool — live leaderboard from ESPN public feed
 
-const TEAMS = {
-  "John": [],
-  "TQ":   [],
-  "Sam":  [],
-  "Coz":  [],
-  "Tim":  [],
-};
+// Team names in draft order. Rosters are filled from the Draft panel (typed picks,
+// saved in the browser) — see the Draft section at the bottom of this file.
+const DEFAULT_TEAMS = ["John", "TQ", "Sam", "Coz", "Tim"];
+const DRAFT_ROUNDS = 10;   // picks per team; lowest 5 count toward scoring
+const DRAFT_KEY = "golfPoolDraft_usopen_2026";
+
+let TEAMS = {};            // { teamName: [golfer, ...] } — rebuilt by applyDraft()
+let TEAMS_ORDER = [];      // team names in draft order — set by applyDraft()
+let TEAMS_COUNT = 0;       // set by applyDraft()
 
 // Sportsbook win-only odds (American). Used as baseline prior; Polymarket overrides live.
 const DRAFTKINGS_ODDS = {
@@ -26,8 +28,13 @@ const ESPN_URL = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scorebo
 const POLYMARKET_URL = "https://gamma-api.polymarket.com/markets";
 const REFRESH_MS = 60000;
 
-const TEAMS_ORDER = Object.keys(TEAMS);
-const TEAMS_COUNT = TEAMS_ORDER.length;
+// ESPN's default scoreboard returns whatever event is "current" (e.g., the RBC
+// Canadian Open the week before), so we query the U.S. Open dates and pick that
+// event by name. U.S. Open 2026: June 18–21 (Shinnecock Hills).
+const ESPN_EVENT_DATES = "20260618-20260622";
+const TARGET_EVENT_RE = /u\.?\s*s\.?\s*open/i;
+
+// TEAMS_ORDER / TEAMS_COUNT are derived from the draft (see applyDraft() below).
 
 // Live Polymarket win probabilities, keyed by norm(playerName)
 let polymarketOdds = {};
@@ -314,7 +321,7 @@ function scoreClass(n) {
 }
 
 async function fetchData() {
-  const res = await fetch(ESPN_URL + "?_=" + Date.now());
+  const res = await fetch(`${ESPN_URL}?dates=${ESPN_EVENT_DATES}&_=${Date.now()}`);
   if (!res.ok) throw new Error("ESPN fetch failed: " + res.status);
   return await res.json();
 }
@@ -395,7 +402,7 @@ function positionNumber(posStr) {
 }
 
 function render(data) {
-  const ev = data.events?.[0];
+  const ev = (data.events || []).find(e => TARGET_EVENT_RE.test(e.name || "")) || data.events?.[0];
   if (!ev) {
     document.getElementById("event").textContent = "No active event";
     return;
@@ -403,6 +410,9 @@ function render(data) {
   const comp = ev.competitions?.[0] || {};
   const players = comp.competitors || [];
   const idx = buildPlayerIndex(players);
+
+  // Feed the draft autocomplete with the live field
+  populateFieldDatalist(idx);
 
   // Header
   document.getElementById("event").textContent = ev.name || "";
@@ -604,6 +614,7 @@ function render(data) {
 async function refresh() {
   try {
     const data = await fetchData();
+    window._lastData = data;
     render(data);
   } catch (e) {
     console.error(e);
@@ -611,6 +622,148 @@ async function refresh() {
   }
 }
 
-// Kick off both fetches immediately, then refresh on the same interval
+/* ============================ Draft entry ============================ */
+// Picks are typed into the grid in snake order and saved to the browser.
+// applyDraft() turns them into TEAMS / TEAMS_ORDER / TEAMS_COUNT, which the
+// leaderboard already knows how to score.
+
+let draft = loadDraft();
+
+function loadDraft() {
+  try {
+    const s = JSON.parse(localStorage.getItem(DRAFT_KEY));
+    if (s && Array.isArray(s.teams) && Array.isArray(s.picks)) {
+      return { teams: s.teams.slice(), rounds: s.rounds || DRAFT_ROUNDS, picks: s.picks.slice() };
+    }
+  } catch {}
+  return { teams: DEFAULT_TEAMS.slice(), rounds: DRAFT_ROUNDS, picks: [] };
+}
+
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch {}
+}
+
+const totalPicks = () => draft.teams.length * draft.rounds;
+
+// Flat snake index for the cell at (round r, column c). Mirrors getDraftPick():
+// round 0 runs left→right, round 1 right→left, and so on.
+function pickIndex(r, c) {
+  const n = draft.teams.length;
+  const posInRound = (r % 2 === 0) ? c : (n - 1 - c);
+  return r * n + posInRound;
+}
+
+// Rebuild TEAMS / TEAMS_ORDER / TEAMS_COUNT from the typed picks.
+function applyDraft() {
+  TEAMS_ORDER = draft.teams.slice();
+  TEAMS_COUNT = TEAMS_ORDER.length;
+  TEAMS = {};
+  for (const t of draft.teams) TEAMS[t] = [];
+  for (let r = 0; r < draft.rounds; r++) {
+    for (let c = 0; c < draft.teams.length; c++) {
+      const name = (draft.picks[pickIndex(r, c)] || "").trim();
+      if (name) TEAMS[draft.teams[c]].push(name);
+    }
+  }
+}
+
+function escHtml(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function escAttr(s) { return (s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
+
+function populateFieldDatalist(idx) {
+  const dl = document.getElementById("field-names");
+  if (!dl) return;
+  const names = [...idx.values()].map(p => p.name).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  dl.innerHTML = names.map(n => `<option value="${escAttr(n)}"></option>`).join("");
+}
+
+// Re-render the leaderboard from the last ESPN payload (no refetch needed)
+function renderFromCache() {
+  if (window._lastData) { try { render(window._lastData); } catch (e) { console.error(e); } }
+}
+
+function renderDraft(focusNext) {
+  const board = document.getElementById("draft-board");
+  if (!board) return;
+  const n = draft.teams.length;
+
+  // next empty slot, scanned in snake order = "on the clock"
+  let nextIdx = -1;
+  for (let i = 0; i < totalPicks(); i++) {
+    if (!(draft.picks[i] || "").trim()) { nextIdx = i; break; }
+  }
+
+  let html = "<table class='draft-table'><thead><tr><th></th>";
+  for (let c = 0; c < n; c++) {
+    html += `<th><input class="team-name" data-col="${c}" value="${escAttr(draft.teams[c])}" aria-label="Team ${c + 1} name"></th>`;
+  }
+  html += "</tr></thead><tbody>";
+  for (let r = 0; r < draft.rounds; r++) {
+    html += `<tr><td class="rnd">R${r + 1}</td>`;
+    for (let c = 0; c < n; c++) {
+      const idx = pickIndex(r, c);
+      const isNext = idx === nextIdx;
+      html += `<td><input class="pick${isNext ? " next" : ""}" list="field-names" data-idx="${idx}" value="${escAttr(draft.picks[idx] || "")}" placeholder="${isNext ? "on the clock" : ""}" aria-label="Round ${r + 1} ${escAttr(draft.teams[c])}"></td>`;
+    }
+    html += "</tr>";
+  }
+  html += "</tbody></table>";
+  board.innerHTML = html;
+
+  const oc = document.getElementById("draft-onclock");
+  if (oc) {
+    if (nextIdx === -1) {
+      oc.innerHTML = `All ${totalPicks()} picks entered — edit any cell to adjust. Rosters update below as you type.`;
+    } else {
+      const r = Math.floor(nextIdx / n);
+      const posInRound = nextIdx - r * n;
+      const c = (r % 2 === 0) ? posInRound : (n - 1 - posInRound);
+      oc.innerHTML = `Pick <strong>${nextIdx + 1}</strong> of ${totalPicks()} · Round ${r + 1} · <strong>${escHtml(draft.teams[c])}</strong> on the clock`;
+    }
+  }
+
+  board.querySelectorAll("input.pick").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const idx = parseInt(inp.dataset.idx, 10);
+      draft.picks[idx] = inp.value.trim();
+      while (draft.picks.length && !(draft.picks[draft.picks.length - 1] || "").trim()) draft.picks.pop();
+      saveDraft(); applyDraft(); renderFromCache(); renderDraft(true);
+    });
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); inp.blur(); } });
+  });
+  board.querySelectorAll("input.team-name").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const c = parseInt(inp.dataset.col, 10);
+      draft.teams[c] = inp.value.trim() || draft.teams[c];
+      saveDraft(); applyDraft(); renderFromCache(); renderDraft();
+    });
+  });
+
+  if (focusNext) { const nx = board.querySelector("input.pick.next"); if (nx) nx.focus(); }
+}
+
+function initDraft() {
+  applyDraft();
+  const undo = document.getElementById("draft-undo");
+  if (undo) undo.addEventListener("click", () => {
+    let last = -1;
+    for (let i = 0; i < totalPicks(); i++) if ((draft.picks[i] || "").trim()) last = i;
+    if (last >= 0) {
+      draft.picks[last] = "";
+      while (draft.picks.length && !(draft.picks[draft.picks.length - 1] || "").trim()) draft.picks.pop();
+      saveDraft(); applyDraft(); renderFromCache(); renderDraft(true);
+    }
+  });
+  const clear = document.getElementById("draft-clear");
+  if (clear) clear.addEventListener("click", () => {
+    if (!confirm("Clear all picks and reset team names? This cannot be undone.")) return;
+    draft = { teams: DEFAULT_TEAMS.slice(), rounds: DRAFT_ROUNDS, picks: [] };
+    saveDraft(); applyDraft(); renderFromCache(); renderDraft(true);
+  });
+  renderDraft();
+}
+
+/* ============================ Kickoff ============================ */
+initDraft();                              // build rosters + draft UI from saved picks
 Promise.all([fetchPolymarketOdds(), refresh()]);
 setInterval(() => { fetchPolymarketOdds(); refresh(); }, REFRESH_MS);

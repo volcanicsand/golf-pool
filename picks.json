@@ -2,9 +2,9 @@
   "teams": ["Coz", "Tim", "TQ", "Sam", "John"],
   "rounds": 10,
   "rosters": {
-    "Coz": ["Scottie Scheffler", "Bryson DeChambeau", "Collin Morikawa", "Patrick Cantlay", "Viktor Hovland", "Tyrrell Hatton", "Ben Griffin", "Cameron Smith", "Ryan Gerard"],
-    "Tim": ["Rory McIlroy", "Brooks Koepka", "Wyndham Clark", "J.J. Spaun", "Jordan Spieth", "Min Woo Lee", "Aaron Rai", "Shane Lowry", "Akshay Bhatia"],
-    "TQ": ["Cameron Young", "Ludvig Åberg", "Si Woo Kim", "Justin Thomas", "Justin Rose", "Adam Scott", "Alex Fitzpatrick", "Rickie Fowler", "Jackson Koivun"],
+    "Coz": ["Scottie Scheffler", "Bryson DeChambeau", "Collin Morikawa", "Patrick Cantlay", "Viktor Hovland", "Tyrrell Hatton", "Ben Griffin", "Cameron Smith", "Ryan Gerard", "Jason Day"],
+    "Tim": ["Rory McIlroy", "Brooks Koepka", "Wyndham Clark", "J.J. Spaun", "Jordan Spieth", "Min Woo Lee", "Aaron Rai", "Shane Lowry", "Akshay Bhatia", "J.T. Poston"],
+    "TQ": ["Cameron Young", "Ludvig Åberg", "Si Woo Kim", "Justin Thomas", "Justin Rose", "Adam Scott", "Alex Fitzpatrick", "Rickie Fowler", "Jackson Koivun", "Nicolai Hojgaard"],
     "Sam": ["Xander Schauffele", "Matt Fitzpatrick", "Sam Burns", "Patrick Reed", "Maverick McNealy", "Corey Conners", "Harris English", "Sepp Straka", "Jacob Bridgeman", "Alex Smalley"],
     "John": ["Jon Rahm", "Tommy Fleetwood", "Russell Henley", "Chris Gotterup", "Kurt Kitayama", "Hideki Matsuyama", "Robert MacIntyre", "Joaquin Niemann", "Kristoffer Reitan", "David Puig"]
   }

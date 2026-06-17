@@ -13,8 +13,44 @@ let TEAMS_COUNT = 0;       // set by applyDraft()
 
 // Sportsbook win-only odds (American). Used as baseline prior; Polymarket overrides live.
 const DRAFTKINGS_ODDS = {
-  // Emptied for the U.S. Open. Paste current U.S. Open win odds (American) here to
-  // restore the baseline prior; until then live Polymarket + draft-pick fallback supply it.
+  // U.S. Open 2026 outright-winner odds (American), entered 6/17/26. Baseline prior;
+  // live Polymarket overrides if available. Drives per-player win % and the sim's odds rank.
+  "Scottie Scheffler": 445,
+  "Rory McIlroy": 920,
+  "Jon Rahm": 1175,
+  "Cameron Young": 1900,
+  "Xander Schauffele": 1900,
+  "Tommy Fleetwood": 2200,
+  "Matt Fitzpatrick": 2300,
+  "Ludvig Aberg": 2500,
+  "Bryson DeChambeau": 3400,
+  "Si Woo Kim": 3500,
+  "Brooks Koepka": 3600,
+  "Sam Burns": 3600,
+  "Collin Morikawa": 4000,
+  "Russell Henley": 4000,
+  "Chris Gotterup": 4300,
+  "Tyrrell Hatton": 4300,
+  "Wyndham Clark": 4600,
+  "Patrick Reed": 4600,
+  "Patrick Cantlay": 5100,
+  "Viktor Hovland": 5700,
+  "J.J. Spaun": 5800,
+  "Justin Thomas": 5900,
+  "Kurt Kitayama": 6800,
+  "Maverick McNealy": 7200,
+  "Justin Rose": 7200,
+  "Adam Scott": 7200,
+  "Robert MacIntyre": 7200,
+  "Hideki Matsuyama": 7600,
+  "Min Woo Lee": 7800,
+  "Harris English": 8000,
+  "Jordan Spieth": 8200,
+  "Joaquin Niemann": 8200,
+  "Ben Griffin": 8400,
+  "Alex Fitzpatrick": 9600,
+  "Aaron Rai": 10500,
+  "Corey Conners": 24000,
 };
 
 // Convert American odds to implied prob, normalize to remove vig
@@ -162,7 +198,7 @@ function randNormal(mean, sd) {
 function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
   const SIMS = 3000;
   const STROKE_SD_PER_ROUND = 3.0;
-  const SKILL_SLOPE = 0.04;       // strokes per draft-pick per round; pick 25 = neutral
+  const SKILL_SLOPE = 0.04;       // strokes per odds-rank per round; rank 25 = neutral
   const NEUTRAL_PICK = 25;
   const TOP_N = 5;
   const TOTAL_ROUNDS = 4;
@@ -220,7 +256,7 @@ function simulatePoolWins(allRows, holesRemaining, cutPenalty) {
         r._simFinal = null;       // unknown; skip from leader/top-10 calc
       } else {
         const currentPace = roundsPlayed >= 0.5 ? r.score / roundsPlayed : 0;
-        const skillRate = (r.draftPick - NEUTRAL_PICK) * SKILL_SLOPE;
+        const skillRate = ((r.oddsRank ?? r.draftPick) - NEUTRAL_PICK) * SKILL_SLOPE;
         const baselineRate = COURSE_DIFFICULTY + skillRate;
         const futureRate = PACE_PERSISTENCE * currentPace + (1 - PACE_PERSISTENCE) * baselineRate;
         const expectedRemaining = futureRate * roundsRemaining;
@@ -520,6 +556,10 @@ function render(data) {
     }
   }
   computeWinProbs(allRows, leaderScore, holesRemaining);
+
+  // Rank rostered players by odds-implied win probability (favorite = 1). The Monte
+  // Carlo uses this rank instead of draft order, so projections track the betting odds.
+  allRows.slice().sort((a, b) => (b.prior || 0) - (a.prior || 0)).forEach((r, i) => { r.oddsRank = i + 1; });
 
   // Pool-win probability + final score projections: Monte Carlo simulation
   const { winProbs: poolProbs, projections: teamProjections } = simulatePoolWins(allRows, holesRemaining, cutPenalty);

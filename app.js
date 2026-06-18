@@ -728,7 +728,8 @@ function render(data) {
         }
         const cls = scoreClass(r.score);
         const display = r.score == null ? (r.rawScore || "—") : fmtScore(r.score);
-        const thru = r.thru ? ` <span class="thru">thru ${r.thru}</span>` : "";
+        // Hole indicator now lives in the score slot vacated by the top-10 tag.
+        const hole = (r.thru && !r.missed) ? ` <span class="thru">thru ${r.thru}</span>` : "";
         const pos = (r.pos && !r.missed) ? ` <span class="pos">${r.pos}</span>` : "";
         const classes = [];
         if (r.missed) classes.push("missed-cut");
@@ -736,13 +737,16 @@ function render(data) {
         if (r.penalized) classes.push("penalized");
         const star = r.counts ? '<span class="star" title="Counts toward top 5">★</span> ' : '<span class="star-spacer">  </span>';
         const penaltyNote = r.penalized ? ` <span class="penalty-note">→ ${fmtScore(r.effectiveScore)}</span>` : "";
+        // Name color encodes live standing: leader (1st) vs top-10. The −1 top-10
+        // bonus is still computed in scoring; it's just no longer shown as a tag here.
+        const nameClass = r.isWinner ? "leader" : (r.isTop10 ? "top10" : "");
         const bonusTags = [];
         if (r.isWinner) {
           const wbStr = winnerBonus % 1 === 0 ? winnerBonus.toFixed(0) : winnerBonus.toFixed(1);
           const label = leadersCount > 1 ? `WIN −${wbStr} (T${leadersCount})` : `WIN −5`;
           bonusTags.push(`<span class="bonus-tag" title="-5 split ${leadersCount} ways">${label}</span>`);
-        } else if (r.isTop10) bonusTags.push('<span class="bonus-tag" title="-1 top 10">T10 −1</span>');
-        return `<li class="${classes.join(' ')}">${star}<span class="nm">${r.name}${pos}${thru}</span><span class="sc ${cls}">${display}${penaltyNote}${bonusTags.join('')}</span></li>`;
+        }
+        return `<li class="${classes.join(' ')}">${star}<span class="nm ${nameClass}">${r.name}${pos}</span><span class="sc ${cls}">${display}${penaltyNote}${bonusTags.join('')}${hole}</span></li>`;
       })
       .join("");
     const bonusDispC = t.totalBonus === 0 ? "" : ` <span class="bonus-inline">${t.totalBonus > 0 ? '+' : ''}${fmtBonus(t.totalBonus)} bonus</span>`;

@@ -200,6 +200,10 @@ tr:last-child td { border-bottom: none; }
   color: var(--muted);
   font-size: 11px;
 }
+/* Live-standing name colors: leader (1st) and top-10. Placed after the
+   base .nm rules so they win on equal specificity. */
+.card li .nm.leader { color: var(--accent); font-weight: 700; }
+.card li .nm.top10 { color: var(--green); font-weight: 600; }
 
 .all-total { color: var(--muted); font-size: 13px; }
 .lead-total { font-weight: 700; font-size: 16px; }

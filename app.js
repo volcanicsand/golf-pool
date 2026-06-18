@@ -539,12 +539,29 @@ function buildPlayerIndex(competitors) {
       score: p.score,
       pos: espnPos || computed.label,
       posNum: computed.num,
-      thru: p.status?.thru || "",
+      thru: computeThru(p),
       status: p.status?.type?.description || "",
       missed: sidelinedNames.has(name),
     });
   }
   return idx;
+}
+
+// Holes played in the current round, derived from the per-hole linescores.
+// This scoreboard feed leaves competitor.status null, so status.thru is never
+// populated — we count the nested per-hole entries instead. Returns "" if the
+// player hasn't started, "F" if the active round is complete (18 holes), else
+// the number of holes completed in the latest round that has any.
+function computeThru(p) {
+  const rounds = p.linescores || [];
+  let played = 0;
+  for (const r of rounds) {
+    const holes = (r.linescores || []).length;
+    if (holes > 0) played = holes;
+  }
+  if (played === 0) return "";
+  if (played >= 18) return "F";
+  return String(played);
 }
 
 function positionNumber(posStr) {
@@ -729,7 +746,8 @@ function render(data) {
         const cls = scoreClass(r.score);
         const display = r.score == null ? (r.rawScore || "—") : fmtScore(r.score);
         // Hole indicator now lives in the score slot vacated by the top-10 tag.
-        const hole = (r.thru && !r.missed) ? ` <span class="thru">thru ${r.thru}</span>` : "";
+        const holeText = r.thru === "F" ? "F" : (r.thru ? `thru ${r.thru}` : "");
+        const hole = (holeText && !r.missed) ? ` <span class="thru">${holeText}</span>` : "";
         const pos = (r.pos && !r.missed) ? ` <span class="pos">${r.pos}</span>` : "";
         const classes = [];
         if (r.missed) classes.push("missed-cut");

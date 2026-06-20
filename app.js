@@ -479,19 +479,71 @@ async function fetchData() {
   return await res.json();
 }
 
+// Rounds in which the player actually recorded holes. ESPN pads everyone —
+// including cut players — with an empty round-3 linescore object, so counting
+// linescore *objects* can't find the cut; we count rounds that have real holes.
+function roundsWithHoles(p) {
+  return (p.linescores || []).filter(r => (r.linescores || []).length > 0).length;
+}
+
+// Reconstruct the missed cut from the field. This scoreboard feed leaves
+// competitor.status null AND gives cut players an empty round-3 placeholder, so
+// neither status text nor round-count works. Instead we compute each player's
+// 36-hole to-par and apply the U.S. Open rule (low 60 and ties). Returns a Set
+// of missed-cut player names. Empty until the weekend (round 3) is underway.
+const CUT_RANK = 60;  // U.S. Open: low 60 and ties make the cut
+function detectCut(competitors) {
+  // Cut only applies once someone has started round 3 (the weekend field is set)
+  const maxPlayed = Math.max(...competitors.map(roundsWithHoles), 0);
+  if (maxPlayed < 3) return new Set();
+
+  // 36-hole to-par = sum of the first two completed rounds' to-par values.
+  // Players missing a numeric round-1 or round-2 (WD/retired) have no 36-hole
+  // score and are treated as out.
+  const through36 = new Map();
+  for (const p of competitors) {
+    const ls = p.linescores || [];
+    const r1 = parseScore(ls[0]?.displayValue);
+    const r2 = parseScore(ls[1]?.displayValue);
+    if (r1 != null && r2 != null) through36.set(p.athlete?.displayName, r1 + r2);
+  }
+
+  // Cut line: the 60th-lowest 36-hole score, with ties making it.
+  const scores = [...through36.values()].sort((a, b) => a - b);
+  let cutLine = scores.length > CUT_RANK ? scores[CUT_RANK - 1]
+              : (scores.length ? scores[scores.length - 1] : Infinity);
+  // Hard floor from evidence: anyone who actually teed off round 3 made the cut,
+  // so the line is no tighter than the worst 36-hole score among R3 starters.
+  // Protects real made-cut players (not yet started R3) from a too-tight CUT_RANK.
+  for (const p of competitors) {
+    if (roundsWithHoles(p) >= 3) {
+      const t = through36.get(p.athlete?.displayName);
+      if (t != null && t > cutLine) cutLine = t;
+    }
+  }
+
+  const missed = new Set();
+  for (const p of competitors) {
+    const name = p.athlete?.displayName;
+    if (roundsWithHoles(p) >= 3) continue;          // played the weekend → made cut
+    const t36 = through36.get(name);
+    if (t36 == null || t36 > cutLine) missed.add(name);  // WD/incomplete or over the line
+  }
+  return missed;
+}
+
 function buildPlayerIndex(competitors) {
   // Compute positions client-side from current scores so we don't depend on
   // ESPN populating position.displayName (which isn't always set during play).
   // Players with a missed-cut/WD/DQ status are excluded from position ranking.
-  // Fallback: if ESPN doesn't provide status, detect cut via linescores count —
-  // players with fewer rounds of data than the max have missed the cut.
-  const maxRounds = Math.max(...competitors.map(p => (p.linescores || []).length), 0);
+  // Cut detection: trust ESPN status text when present, otherwise reconstruct
+  // the cut from 36-hole scores (see detectCut — this feed gives null status).
+  const missedSet = detectCut(competitors);
   const active = [];
   const sidelined = [];
   for (const p of competitors) {
     const status = p.status?.type?.description || "";
-    const rounds = (p.linescores || []).length;
-    if (/cut|wd|dq/i.test(status) || (maxRounds > 2 && rounds < maxRounds)) {
+    if (/cut|wd|dq/i.test(status) || missedSet.has(p.athlete?.displayName)) {
       sidelined.push(p);
     } else {
       active.push(p);
